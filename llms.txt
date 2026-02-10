@@ -1,0 +1,31 @@
+# Artefact Revenue Intelligence MCP Server
+
+> A methodology-driven MCP server for B2B revenue intelligence. Provides RFM analysis, 14.5-point ICP qualification, and pipeline health scoring through Claude, Cursor, and other MCP-compatible AI tools. Integrates with HubSpot CRM.
+
+Artefact MCP Server is different from generic HubSpot CRUD wrappers because it embeds the Artefact Formula — battle-tested scoring models, segmentation logic, and qualification frameworks built from real B2B consulting engagements with companies between $1.6M-$70M revenue.
+
+## Core Tools
+
+- [RFM Analysis](https://github.com/alexboissAV/artefact-mcp-server/blob/main/README.md#run_rfm--rfm-analysis): Scores clients on Recency, Frequency, Monetary value. Segments into 11 categories (Champions through Lost). Extracts ICP patterns from top performers. Supports B2B service, SaaS, and manufacturing presets.
+- [ICP Qualification](https://github.com/alexboissAV/artefact-mcp-server/blob/main/README.md#qualify--icp-qualification-145-point-model): 14.5-point scoring model across Firmographic Fit (5pts), Behavioral Fit (5pts), Strategic Fit (4.5pts). Returns 4-tier classification (Ideal/Strong/Moderate/Poor) with engagement strategy.
+- [Pipeline Health Score](https://github.com/alexboissAV/artefact-mcp-server/blob/main/README.md#score_pipeline_health--pipeline-health-score): 0-100 health score analyzing velocity metrics, stage conversion rates, bottleneck identification, and at-risk deal detection.
+
+## Methodology Resources
+
+- methodology://scoring-model — 14.5-point ICP model reference
+- methodology://tier-definitions — 4-tier classification system
+- methodology://rfm-segments — 11 RFM segment definitions
+- methodology://spiced-framework — SPICED discovery framework
+
+## Installation & Setup
+
+- [PyPI Package](https://pypi.org/project/artefact-mcp/): `pip install artefact-mcp`
+- [GitHub Repository](https://github.com/alexboissAV/artefact-mcp-server): Source code and development
+- [Smithery](https://smithery.ai/server/artefact-revenue-intelligence): One-click install
+
+## Who Is This For
+
+- B2B revenue teams using HubSpot who want AI-powered customer segmentation
+- RevOps managers who need pipeline health analysis accessible from Claude or Cursor
+- Consultants who deliver RFM analysis and ICP scoring to clients
+- Developers building revenue intelligence integrations with MCP

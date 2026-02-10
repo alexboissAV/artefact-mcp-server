@@ -1,0 +1,25 @@
+build:
+  dockerBuildPath: ./
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      hubspotApiKey:
+        type: string
+        title: "HubSpot API Key"
+        description: "Your HubSpot private app access token (pat-na1-xxx). Optional — tools work with demo data without it."
+      licenseKey:
+        type: string
+        title: "Artefact License Key"
+        description: "License key for Pro/Enterprise tier. Free tier (sample data) works without a key."
+  commandFunction: |
+    (config) => ({
+      command: 'uvx',
+      args: ['artefact-mcp'],
+      env: {
+        HUBSPOT_API_KEY: config.hubspotApiKey || '',
+        ARTEFACT_LICENSE_KEY: config.licenseKey || ''
+      }
+    })
