@@ -7,7 +7,7 @@ name = "artefact-mcp"
 version = "0.1.0"
 description = "Methodology-driven MCP server for revenue intelligence: RFM analysis, 14.5-point ICP scoring, pipeline health scoring, and HubSpot integration"
 readme = "README.md"
-license = "BSL-1.1"
+license = {text = "BSL-1.1"}
 requires-python = ">=3.10"
 authors = [
     { name = "Artefact Ventures", email = "alex@artefactventures.com" },
