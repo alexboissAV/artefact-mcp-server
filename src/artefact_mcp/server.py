@@ -62,7 +62,15 @@ def _get_hubspot_client() -> Optional[HubSpotClient]:
 # --- Tools ---
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={
+        "title": "RFM Analysis",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
 def run_rfm(
     source: str = "hubspot",
     industry_preset: str = "default",
@@ -99,7 +107,15 @@ def run_rfm(
             client.close()
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={
+        "title": "ICP Qualification",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
 def qualify(
     company_id: Optional[str] = None,
     company_data: Optional[str] = None,
@@ -153,7 +169,15 @@ def qualify(
             client.close()
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={
+        "title": "Pipeline Health Score",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
 def score_pipeline_health(
     pipeline_id: Optional[str] = None,
     source: str = "hubspot",
