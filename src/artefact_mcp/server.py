@@ -12,6 +12,7 @@ from typing import Optional
 
 from fastmcp import FastMCP
 
+from artefact_mcp import __version__
 from artefact_mcp.core.hubspot_client import HubSpotClient
 from artefact_mcp.core.license import validate_license, require_license, LicenseInfo
 from artefact_mcp.tools.rfm import run_rfm_analysis
@@ -41,10 +42,12 @@ mcp = FastMCP(
     instructions=(
         "Revenue intelligence tools powered by the Artefact Formula methodology. "
         "Includes RFM analysis, ICP scoring (14.5-point model), and pipeline health scoring. "
+        "The qualify tool accepts an optional scoring_config parameter to customize "
+        "scoring for different industries, revenue ranges, and geographies. "
         + (
             "Connect to HubSpot for live data or use built-in sample data."
             if _license.tier != "free"
-            else "Running in free mode — use source='sample' for demo data. "
+            else "Running in free mode — tools auto-detect the best data source. "
             "Purchase a Pro license for live HubSpot integration."
         )
     ),
@@ -275,6 +278,24 @@ def rfm_segments() -> str:
 def spiced_framework() -> str:
     """SPICED discovery framework reference."""
     return get_resource("spiced-framework")
+
+
+@mcp.resource("server://version")
+def server_version() -> str:
+    """Server version and status information."""
+    return json.dumps({
+        "name": "Artefact Revenue Intelligence",
+        "version": __version__,
+        "tier": _license.tier,
+        "hubspot_connected": bool(os.getenv("HUBSPOT_API_KEY")),
+        "tools": ["run_rfm", "qualify", "score_pipeline_health"],
+        "resources": [
+            "methodology://scoring-model",
+            "methodology://tier-definitions",
+            "methodology://rfm-segments",
+            "methodology://spiced-framework",
+        ],
+    }, indent=2)
 
 
 def main():

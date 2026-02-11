@@ -113,17 +113,26 @@ def _validate_remote(license_key: str) -> LicenseInfo:
 
         # Verify store + product ID to prevent cross-product key reuse
         meta = data.get("meta", {})
-        if LEMONSQUEEZY_STORE_ID and str(meta.get("store_id")) != LEMONSQUEEZY_STORE_ID:
+        store_id = str(meta.get("store_id", ""))
+        product_id = str(meta.get("product_id", ""))
+
+        if LEMONSQUEEZY_STORE_ID and store_id and store_id != LEMONSQUEEZY_STORE_ID:
             return LicenseInfo(
                 valid=False,
                 tier="free",
-                error="License key does not belong to this product",
+                error=(
+                    "License key does not belong to this product. "
+                    "Purchase a valid license at https://artefactventures.lemonsqueezy.com"
+                ),
             )
-        if LEMONSQUEEZY_PRODUCT_ID and str(meta.get("product_id")) != LEMONSQUEEZY_PRODUCT_ID:
+        if LEMONSQUEEZY_PRODUCT_ID and product_id and product_id != LEMONSQUEEZY_PRODUCT_ID:
             return LicenseInfo(
                 valid=False,
                 tier="free",
-                error="License key does not belong to this product",
+                error=(
+                    "License key does not belong to this product. "
+                    "Purchase a valid license at https://artefactventures.lemonsqueezy.com"
+                ),
             )
 
         # Determine tier from variant name

@@ -36,6 +36,7 @@ def qualify_prospect(
 
     scorer = ICPScorer(scoring_config=scoring_config)
 
+    hubspot_only = False
     if company_id:
         if not hubspot_client:
             raise ValueError(
@@ -44,7 +45,8 @@ def qualify_prospect(
             )
         hs_data = hubspot_client.fetch_company(company_id)
 
-        # Map HubSpot fields to ICP scorer input format
+        # Merge: HubSpot firmographic data + any behavioral/strategic overrides from company_data
+        overrides = company_data or {}
         company_data = {
             "company_name": hs_data.get("name", "Unknown"),
             "hubspot_id": company_id,
@@ -52,20 +54,24 @@ def qualify_prospect(
             "annual_revenue": hs_data.get("annual_revenue"),
             "employee_count": hs_data.get("employee_count"),
             "geography": hs_data.get("geography", ""),
-            # These behavioral/strategic fields can't be auto-populated from HubSpot
-            # basic fields — the tool will score them as 0 if not provided
-            "tech_stack": company_data.get("tech_stack", []) if company_data else [],
-            "growth_signals": company_data.get("growth_signals", []) if company_data else [],
-            "content_engagement": company_data.get("content_engagement", "none") if company_data else "none",
-            "purchase_history": company_data.get("purchase_history", "never") if company_data else "never",
-            "decision_maker_access": company_data.get("decision_maker_access", "none") if company_data else "none",
-            "budget_authority": company_data.get("budget_authority", "none") if company_data else "none",
-            "strategic_alignment": company_data.get("strategic_alignment", "misaligned") if company_data else "misaligned",
+            "tech_stack": overrides.get("tech_stack", []),
+            "growth_signals": overrides.get("growth_signals", []),
+            "content_engagement": overrides.get("content_engagement", "none"),
+            "purchase_history": overrides.get("purchase_history", "never"),
+            "decision_maker_access": overrides.get("decision_maker_access", "none"),
+            "budget_authority": overrides.get("budget_authority", "none"),
+            "strategic_alignment": overrides.get("strategic_alignment", "misaligned"),
         }
+        # Track if behavioral/strategic were provided or defaulted
+        hubspot_only = not any(
+            overrides.get(k)
+            for k in ("tech_stack", "growth_signals", "content_engagement",
+                      "decision_maker_access", "budget_authority", "strategic_alignment")
+        )
 
     result = scorer.score_company(company_data)
 
-    return {
+    output = {
         "company": {
             "name": company_data.get("company_name", company_data.get("name", "Unknown")),
             "hubspot_id": company_data.get("hubspot_id"),
@@ -78,3 +84,33 @@ def qualify_prospect(
         "recommended_action": result.recommended_action,
         "engagement_strategy": result.engagement_strategy,
     }
+
+    # Warn when only firmographic data is available
+    if hubspot_only:
+        output["_incomplete_score"] = {
+            "warning": (
+                "Score is based on firmographic data only (max ~5/14.5). "
+                "Behavioral Fit and Strategic Fit scored 0 because HubSpot doesn't "
+                "store these fields natively."
+            ),
+            "missing_fields": [
+                "tech_stack", "growth_signals", "content_engagement",
+                "decision_maker_access", "budget_authority", "strategic_alignment",
+            ],
+            "how_to_fix": (
+                "Re-run with company_data containing the missing fields alongside company_id. "
+                "Example: qualify(company_id='123', company_data='{\"tech_stack\": [\"HubSpot\"], "
+                "\"decision_maker_access\": \"c_suite\", \"budget_authority\": \"dedicated\", "
+                "\"strategic_alignment\": \"strong\"}')"
+            ),
+        }
+
+    # Hint about scoring_config when using defaults
+    if not scoring_config:
+        output["_scoring_note"] = (
+            "Scored using the default B2B model. "
+            "Pass scoring_config to customize industries, revenue range, "
+            "geography, and exclusions for your business."
+        )
+
+    return output

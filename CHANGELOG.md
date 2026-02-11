@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2026-02-10
+
+### Fixed
+
+- **ICP incomplete score warning** — When qualifying a company by HubSpot ID only, the output now clearly warns that Behavioral and Strategic Fit scored 0 due to missing fields, lists the missing fields, and shows how to provide them alongside the company_id.
+- **Scoring config discoverability** — ICP qualification results now include a `_scoring_note` hint about the `scoring_config` parameter when using default scoring. Server instructions also mention scoring customization.
+- **Version/health resource** — New `server://version` resource returns server version, license tier, HubSpot connection status, and available tools/resources.
+- **LemonSqueezy error clarity** — License validation errors now include a direct purchase link instead of a generic "does not belong to this product" message.
+
 ## [0.2.1] - 2026-02-10
 
 ### Fixed
