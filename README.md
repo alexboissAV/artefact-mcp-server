@@ -1,6 +1,6 @@
 # Artefact Revenue Intelligence MCP Server
 
-<!-- mcp-name: io.github.alexboissav/artefact-revenue-intelligence -->
+<!-- mcp-name: io.github.alexboissAV/artefact-revenue-intelligence -->
 
 [![PyPI](https://img.shields.io/pypi/v/artefact-mcp)](https://pypi.org/project/artefact-mcp/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)

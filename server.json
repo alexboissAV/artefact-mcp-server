@@ -1,29 +1,36 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.alexboissav/artefact-revenue-intelligence",
-  "description": "Methodology-driven revenue intelligence MCP server with RFM analysis (11-segment classification), 14.5-point ICP scoring, and pipeline health scoring (0-100). Embeds the Artefact Formula — not a generic HubSpot CRUD wrapper. Built for B2B revenue teams.",
-  "version": "0.1.1",
+  "name": "io.github.alexboissAV/artefact-revenue-intelligence",
+  "description": "Revenue intelligence MCP: RFM analysis, 14.5-point ICP scoring, pipeline health. HubSpot.",
+  "repository": {
+    "url": "https://github.com/alexboissAV/artefact-mcp-server",
+    "source": "github"
+  },
+  "version": "0.1.2",
   "packages": [
     {
-      "registry_type": "pypi",
+      "registryType": "pypi",
       "identifier": "artefact-mcp",
-      "version": "0.1.1",
-      "transport": ["stdio"]
-    }
-  ],
-  "_meta": {
-    "io.modelcontextprotocol.registry/publisher-provided": {
-      "category": "business-intelligence",
-      "tags": [
-        "revenue-intelligence",
-        "hubspot",
-        "rfm-analysis",
-        "icp-scoring",
-        "pipeline-health",
-        "b2b",
-        "crm",
-        "sales-intelligence"
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "HubSpot private app access token for live CRM data. Optional — tools work with demo data without it.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "HUBSPOT_API_KEY"
+        },
+        {
+          "description": "Artefact license key for Pro/Enterprise tier. Free tier (sample data) works without a key.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "ARTEFACT_LICENSE_KEY"
+        }
       ]
     }
-  }
+  ]
 }

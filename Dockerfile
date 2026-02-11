@@ -7,4 +7,9 @@ COPY src/ ./src/
 
 RUN pip install --no-cache-dir .
 
-ENTRYPOINT ["artefact-mcp"]
+ENV MCP_TRANSPORT=streamable-http
+ENV MCP_HOST=0.0.0.0
+ENV PORT=8000
+EXPOSE 8000
+
+CMD ["artefact-mcp"]
