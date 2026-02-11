@@ -10,11 +10,13 @@
 pip install artefact-mcp
 ```
 
-Or with uvx (no install needed):
+Or run directly with uvx (no install needed):
 
 ```bash
 uvx artefact-mcp
 ```
+
+**Note:** For MCP server configuration (Claude Desktop, Cursor, etc.), we recommend using the Python method (`python3 -m artefact_mcp`) instead of `uvx` to avoid PATH issues. See configuration sections below.
 
 ## Environment Variables
 
@@ -27,6 +29,22 @@ uvx artefact-mcp
 
 Add to `claude_desktop_config.json`:
 
+**Recommended (Python method):**
+```json
+{
+  "mcpServers": {
+    "artefact-revenue": {
+      "command": "python3",
+      "args": ["-m", "artefact_mcp"],
+      "env": {
+        "HUBSPOT_API_KEY": "pat-na1-xxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+**Alternative (uvx method):**
 ```json
 {
   "mcpServers": {
@@ -40,6 +58,8 @@ Add to `claude_desktop_config.json`:
   }
 }
 ```
+
+*Note: If using uvx and seeing "Server disconnected" errors, see [Common Issues](#common-issues) below.*
 
 ## Claude Code Configuration
 
@@ -57,6 +77,22 @@ claude mcp add artefact-revenue -e HUBSPOT_API_KEY=pat-na1-xxxxxxxx -- uvx artef
 
 Add to `.cursor/mcp.json`:
 
+**Recommended (Python method):**
+```json
+{
+  "mcpServers": {
+    "artefact-revenue": {
+      "command": "python3",
+      "args": ["-m", "artefact_mcp"],
+      "env": {
+        "HUBSPOT_API_KEY": "pat-na1-xxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+**Alternative (uvx method):**
 ```json
 {
   "mcpServers": {
@@ -101,6 +137,57 @@ Ask your AI assistant:
 
 ## Common Issues
 
+### Server Disconnected (uvx PATH Issue)
+
+**Problem:** "MCP artefact-revenue: Server disconnected" error when using `uvx` command.
+
+**Cause:** Claude Desktop and other sandboxed applications may not have access to `uvx` in your PATH. This commonly happens when `uvx` is installed via:
+- Homebrew → `~/.local/bin/uvx`
+- curl installation → `~/.cargo/bin/uvx`
+
+**Solutions:**
+
+1. **Switch to Python method (recommended):**
+   ```json
+   {
+     "mcpServers": {
+       "artefact-revenue": {
+         "command": "python3",
+         "args": ["-m", "artefact_mcp"],
+         "env": {}
+       }
+     }
+   }
+   ```
+
+2. **Use full uvx path:** Find your uvx location and use the full path:
+   ```bash
+   which uvx
+   # Example output: /Users/yourname/.local/bin/uvx
+   ```
+
+   Update config:
+   ```json
+   {
+     "mcpServers": {
+       "artefact-revenue": {
+         "command": "/Users/yourname/.local/bin/uvx",
+         "args": ["artefact-mcp"],
+         "env": {}
+       }
+     }
+   }
+   ```
+
+3. **Verify manually:** Test that the server starts:
+   ```bash
+   uvx artefact-mcp==0.2.3
+   # Should see: "Artefact Revenue Intelligence MCP Server running..."
+   ```
+
+### Other Issues
+
 - **"HubSpot API key required"** — Set `HUBSPOT_API_KEY` or use `source="sample"` for demo data
 - **"Pro license required"** — Live HubSpot data requires a license. Use `source="sample"` for free demo data
+- **Import errors with `python3 -m artefact_mcp`** — Ensure package is installed: `pip install artefact-mcp`
 - **Server won't start** — Ensure Python 3.10+ and `fastmcp>=2.0` are installed
