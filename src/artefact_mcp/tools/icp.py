@@ -15,6 +15,7 @@ def qualify_prospect(
     company_id: Optional[str] = None,
     company_data: Optional[dict] = None,
     hubspot_client: Optional[HubSpotClient] = None,
+    scoring_config: Optional[dict] = None,
 ) -> dict:
     """Score a prospect against the 14.5-point ICP model.
 
@@ -22,6 +23,10 @@ def qualify_prospect(
         company_id: HubSpot company ID. If provided, fetches data from HubSpot.
         company_data: Manual dict with company attributes. Used if company_id is None.
         hubspot_client: Pre-configured HubSpotClient (required if company_id given).
+        scoring_config: Optional overrides for scoring parameters. Keys:
+            primary_industries, adjacent_industries, excluded_industries,
+            revenue_range ([min, max]), employee_range ([min, max]),
+            primary_geography, secondary_geography.
 
     Returns:
         Full scoring result dict.
@@ -29,7 +34,7 @@ def qualify_prospect(
     if not company_id and not company_data:
         raise ValueError("Either company_id or company_data must be provided.")
 
-    scorer = ICPScorer()
+    scorer = ICPScorer(scoring_config=scoring_config)
 
     if company_id:
         if not hubspot_client:

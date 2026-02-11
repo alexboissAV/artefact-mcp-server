@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-02-10
+
+### Added
+
+- **ICP inline scoring overrides** — Pro users can now pass `scoring_config` to the `qualify` tool to customize scoring parameters per call: primary/adjacent/excluded industries, revenue range, employee range, primary/secondary geography. AI assistants translate natural language ICP descriptions into config automatically.
+- **Pipeline stage auto-detection** — When using live HubSpot data, pipeline stages are now fetched from HubSpot's API instead of using hardcoded defaults. Works with any custom pipeline configuration.
+- **`fetch_pipeline_stages()` HubSpot client method** — New method to retrieve pipeline stage definitions in display order.
+
+### Changed
+
+- `ICPScorer` now accepts optional `scoring_config` dict in constructor for parameter overrides.
+- `_calculate_velocity()` and `_find_at_risk_deals()` accept optional stage order/labels for dynamic pipelines.
+- `score_pipeline()` auto-detects stages when HubSpot client is available, falls back to defaults gracefully.
+
+## [0.1.2] - 2026-02-10
+
+### Fixed
+
+- Fixed `mcp-name` case mismatch in README for Official MCP Registry validation.
+- Added `.mcpregistry_*` to `.gitignore` to prevent token file leaks.
+
 ## [0.1.1] - 2026-02-10
 
 ### Added

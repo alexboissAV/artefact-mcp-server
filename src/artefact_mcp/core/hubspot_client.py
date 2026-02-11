@@ -123,6 +123,28 @@ class HubSpotClient:
 
         return deals
 
+    # --- Pipeline Stages (auto-detect) ---
+
+    def fetch_pipeline_stages(self, pipeline_id: str = "default") -> list[dict]:
+        """Fetch pipeline stage definitions in order from HubSpot.
+
+        Returns list of dicts with 'id', 'label', and 'display_order'.
+        """
+        url = f"{self.BASE_URL}/crm/v3/pipelines/deals/{pipeline_id}"
+        response = self._request("GET", url)
+        data = response.json()
+
+        stages = []
+        for stage in data.get("stages", []):
+            stages.append({
+                "id": stage.get("id", ""),
+                "label": stage.get("label", stage.get("id", "")),
+                "display_order": stage.get("displayOrder", 0),
+            })
+
+        stages.sort(key=lambda s: s["display_order"])
+        return stages
+
     # --- Deal Stage History (for Velocity) ---
 
     def fetch_deal_stage_history(self, deal_id: str) -> list[dict]:

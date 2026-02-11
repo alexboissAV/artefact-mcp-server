@@ -119,6 +119,7 @@ def run_rfm(
 def qualify(
     company_id: Optional[str] = None,
     company_data: Optional[str] = None,
+    scoring_config: Optional[str] = None,
 ) -> str:
     """Score a prospect against the Artefact 14.5-point ICP model.
 
@@ -136,6 +137,12 @@ def qualify(
             decision_maker_access ("c_suite"|"director"|"manager"|"indirect"|"none"),
             budget_authority ("dedicated"|"shared"|"possible"|"none"),
             strategic_alignment ("strong"|"partial"|"misaligned").
+        scoring_config: Optional JSON string to override default scoring parameters.
+            Customize the model for your business. Example keys:
+            primary_industries (list), adjacent_industries (list),
+            excluded_industries (list), revenue_range ([min, max]),
+            employee_range ([min, max]), primary_geography (list),
+            secondary_geography (list).
 
     Returns:
         JSON with total score, tier, breakdown, exclusion check, and recommended action.
@@ -154,12 +161,20 @@ def qualify(
         except (json.JSONDecodeError, TypeError) as e:
             return json.dumps({"error": f"Invalid company_data JSON: {e}"})
 
+    parsed_config = None
+    if scoring_config:
+        try:
+            parsed_config = json.loads(scoring_config) if isinstance(scoring_config, str) else scoring_config
+        except (json.JSONDecodeError, TypeError) as e:
+            return json.dumps({"error": f"Invalid scoring_config JSON: {e}"})
+
     client = _get_hubspot_client() if company_id else None
     try:
         result = qualify_prospect(
             company_id=company_id,
             company_data=parsed_data,
             hubspot_client=client,
+            scoring_config=parsed_config,
         )
         return json.dumps(result, indent=2, default=str)
     except Exception as e:

@@ -56,12 +56,26 @@ def _parse_date(value) -> Optional[datetime]:
             return None
 
 
-def _calculate_velocity(deals: list[dict], now: datetime) -> dict:
+def _calculate_velocity(
+    deals: list[dict],
+    now: datetime,
+    stage_order: list[str] | None = None,
+    stage_labels: dict[str, str] | None = None,
+) -> dict:
     """Calculate stage velocity metrics from deal data.
 
     Estimates time-in-stage based on deal creation date and current stage,
     since HubSpot stage history requires per-deal API calls.
+
+    Args:
+        deals: List of deal dicts.
+        now: Current datetime.
+        stage_order: Ordered list of stage IDs. Falls back to DEFAULT_STAGE_ORDER.
+        stage_labels: Map of stage ID to display label. Falls back to STAGE_LABELS.
     """
+    _order = stage_order or DEFAULT_STAGE_ORDER
+    _labels = stage_labels or STAGE_LABELS
+
     stage_durations: dict[str, list[int]] = {}
     deal_stages: dict[str, set[str]] = {}
 
@@ -93,40 +107,40 @@ def _calculate_velocity(deals: list[dict], now: datetime) -> dict:
     max_avg = 0.0
     bottleneck = None
 
-    for stage in DEFAULT_STAGE_ORDER:
+    for stage in _order:
         if stage in stage_durations:
             durations = stage_durations[stage]
             avg = sum(durations) / len(durations)
-            avg_days[STAGE_LABELS.get(stage, stage)] = round(avg, 1)
+            avg_days[_labels.get(stage, stage)] = round(avg, 1)
             if avg > max_avg:
                 max_avg = avg
-                bottleneck = STAGE_LABELS.get(stage, stage)
+                bottleneck = _labels.get(stage, stage)
 
     overall = round(sum(avg_days.values()), 0)
 
     # Conversion rates (deals that moved past each stage)
     conversion_rates: dict[str, float] = {}
-    for i in range(len(DEFAULT_STAGE_ORDER) - 1):
-        current = DEFAULT_STAGE_ORDER[i]
-        next_stage = DEFAULT_STAGE_ORDER[i + 1]
+    for i in range(len(_order) - 1):
+        current = _order[i]
+        next_stage = _order[i + 1]
 
         # Deals at or past current stage
         current_count = 0
         next_count = 0
-        current_idx = DEFAULT_STAGE_ORDER.index(current)
-        next_idx = DEFAULT_STAGE_ORDER.index(next_stage)
+        current_idx = _order.index(current)
+        next_idx = _order.index(next_stage)
 
         for deal in deals:
             deal_stage = deal.get("stage", "")
-            if deal_stage in DEFAULT_STAGE_ORDER:
-                deal_idx = DEFAULT_STAGE_ORDER.index(deal_stage)
+            if deal_stage in _order:
+                deal_idx = _order.index(deal_stage)
                 if deal_idx >= current_idx:
                     current_count += 1
                 if deal_idx >= next_idx:
                     next_count += 1
 
         rate = round(next_count / current_count * 100) if current_count > 0 else 0
-        label = f"{STAGE_LABELS.get(current, current)} -> {STAGE_LABELS.get(next_stage, next_stage)}"
+        label = f"{_labels.get(current, current)} -> {_labels.get(next_stage, next_stage)}"
         conversion_rates[label] = rate
 
     return {
@@ -137,8 +151,13 @@ def _calculate_velocity(deals: list[dict], now: datetime) -> dict:
     }
 
 
-def _find_at_risk_deals(deals: list[dict], now: datetime) -> list[dict]:
+def _find_at_risk_deals(
+    deals: list[dict],
+    now: datetime,
+    stage_labels: dict[str, str] | None = None,
+) -> list[dict]:
     """Identify deals that are at risk based on age and stagnation."""
+    _labels = stage_labels or STAGE_LABELS
     at_risk = []
 
     for deal in deals:
@@ -178,7 +197,7 @@ def _find_at_risk_deals(deals: list[dict], now: datetime) -> list[dict]:
                 "id": deal.get("id"),
                 "name": deal.get("name"),
                 "days_in_pipeline": days_total,
-                "stage": STAGE_LABELS.get(deal.get("stage", ""), deal.get("stage", "")),
+                "stage": _labels.get(deal.get("stage", ""), deal.get("stage", "")),
                 "amount": deal.get("amount", 0),
                 "risk_reasons": risk_reasons,
             })
@@ -270,6 +289,19 @@ def score_pipeline(
     else:
         raise ValueError(f"Invalid source: {source}. Use 'hubspot' or 'sample'.")
 
+    # Auto-detect pipeline stages from HubSpot when using live data
+    stage_order = None
+    stage_labels = None
+
+    if source == "hubspot" and hubspot_client:
+        try:
+            hs_stages = hubspot_client.fetch_pipeline_stages(pipeline_id or "default")
+            if hs_stages:
+                stage_order = [s["id"] for s in hs_stages]
+                stage_labels = {s["id"]: s["label"] for s in hs_stages}
+        except (ValueError, Exception):
+            pass  # Fall back to defaults if pipeline fetch fails
+
     if not deals:
         return {
             "health_score": 0,
@@ -282,13 +314,14 @@ def score_pipeline(
             "stage_distribution": {},
         }
 
+    _labels = stage_labels or STAGE_LABELS
     total_value = sum(d.get("amount", 0) for d in deals)
 
     # Velocity metrics
-    velocity = _calculate_velocity(deals, now)
+    velocity = _calculate_velocity(deals, now, stage_order, stage_labels)
 
     # At-risk deals
-    at_risk = _find_at_risk_deals(deals, now)
+    at_risk = _find_at_risk_deals(deals, now, stage_labels)
 
     # Health score
     health_score, health_label = _calculate_health_score(deals, velocity, at_risk)
@@ -296,7 +329,7 @@ def score_pipeline(
     # Stage distribution
     stage_dist: dict = {}
     for deal in deals:
-        stage = STAGE_LABELS.get(deal.get("stage", ""), deal.get("stage", ""))
+        stage = _labels.get(deal.get("stage", ""), deal.get("stage", ""))
         if stage not in stage_dist:
             stage_dist[stage] = {"count": 0, "value": 0}
         stage_dist[stage]["count"] += 1

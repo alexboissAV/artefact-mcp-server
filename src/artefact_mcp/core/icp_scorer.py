@@ -107,7 +107,21 @@ class ICPResult:
 
 
 class ICPScorer:
-    """14.5-point ICP scoring model across Firmographic, Behavioral, and Strategic dimensions."""
+    """14.5-point ICP scoring model across Firmographic, Behavioral, and Strategic dimensions.
+
+    Accepts optional scoring_config to override default parameters:
+        - primary_industries: list of high-score industries (2 pts)
+        - adjacent_industries: list of medium-score industries (1 pt)
+        - excluded_industries: list of auto-excluded industries
+        - revenue_range: [min, max] for sweet spot (1.5 pts)
+        - employee_range: [min, max] for ideal range (1 pt)
+        - primary_geography: list of primary market strings (0.5 pts)
+        - secondary_geography: list of secondary market strings (0.25 pts)
+        - required_tech: list of must-have tech stack items
+    """
+
+    def __init__(self, scoring_config: dict | None = None):
+        self._config = scoring_config or {}
 
     def score_company(self, company_data: dict) -> ICPResult:
         """Score a company against the ICP model.
@@ -204,34 +218,32 @@ class ICPScorer:
 
         industry_lower = industry.lower().strip()
 
-        # Primary targets — proven success
-        primary = [
+        # Use config overrides if provided, otherwise defaults
+        primary = self._config.get("primary_industries", [
             "technology", "saas", "software", "b2b technology",
             "manufacturing", "industrial",
             "professional services",
-        ]
-        # Adjacent — transferable value
-        adjacent = [
+        ])
+        adjacent = self._config.get("adjacent_industries", [
             "healthcare", "health tech", "fintech", "financial services",
             "construction", "engineering", "logistics", "distribution",
             "education", "edtech",
-        ]
-        # Tangential
-        tangential = [
+        ])
+        tangential = self._config.get("tangential_industries", [
             "real estate", "media", "telecommunications", "energy",
             "agriculture", "food", "hospitality",
-        ]
+        ])
 
         for p in primary:
-            if p in industry_lower or industry_lower in p:
+            if p.lower() in industry_lower or industry_lower in p.lower():
                 return {"score": 2.0, "max": 2.0, "rationale": f"Primary target industry: {industry}"}
 
         for a in adjacent:
-            if a in industry_lower or industry_lower in a:
+            if a.lower() in industry_lower or industry_lower in a.lower():
                 return {"score": 1.0, "max": 2.0, "rationale": f"Adjacent industry: {industry}"}
 
         for t in tangential:
-            if t in industry_lower or industry_lower in t:
+            if t.lower() in industry_lower or industry_lower in t.lower():
                 return {"score": 0.5, "max": 2.0, "rationale": f"Tangential industry: {industry}"}
 
         return {"score": 0, "max": 2.0, "rationale": f"Outside target industries: {industry}"}
@@ -241,6 +253,21 @@ class ICPScorer:
         if annual_revenue is None:
             return {"score": 0, "max": 1.5, "rationale": "No revenue data"}
 
+        # Config override: [min, max] for sweet spot
+        rev_range = self._config.get("revenue_range")
+        if rev_range and len(rev_range) == 2:
+            r_min, r_max = rev_range[0], rev_range[1]
+            margin = (r_max - r_min) * 0.25  # 25% margin for acceptable/stretch
+            if r_min <= annual_revenue <= r_max:
+                return {"score": 1.5, "max": 1.5, "rationale": f"Sweet spot: ${annual_revenue:,.0f}"}
+            elif (r_min - margin) <= annual_revenue < r_min or r_max < annual_revenue <= (r_max + margin):
+                return {"score": 1.0, "max": 1.5, "rationale": f"Acceptable range: ${annual_revenue:,.0f}"}
+            elif (r_min - margin * 2) <= annual_revenue < (r_min - margin) or (r_max + margin) < annual_revenue <= (r_max + margin * 2):
+                return {"score": 0.5, "max": 1.5, "rationale": f"Stretch range: ${annual_revenue:,.0f}"}
+            else:
+                return {"score": 0, "max": 1.5, "rationale": f"Outside viable range: ${annual_revenue:,.0f}"}
+
+        # Default Artefact ranges
         if 1_600_000 <= annual_revenue <= 70_000_000:
             return {"score": 1.5, "max": 1.5, "rationale": f"Sweet spot: ${annual_revenue:,.0f}"}
         elif 1_000_000 <= annual_revenue < 1_600_000 or 70_000_000 < annual_revenue <= 100_000_000:
@@ -255,6 +282,20 @@ class ICPScorer:
         if employee_count is None:
             return {"score": 0, "max": 1.0, "rationale": "No employee data"}
 
+        # Config override: [min, max] for ideal range
+        emp_range = self._config.get("employee_range")
+        if emp_range and len(emp_range) == 2:
+            e_min, e_max = emp_range[0], emp_range[1]
+            margin_low = max(e_min // 2, 1)
+            margin_high = e_max + (e_max - e_min) // 2
+            if e_min <= employee_count <= e_max:
+                return {"score": 1.0, "max": 1.0, "rationale": f"Ideal range: {employee_count}"}
+            elif margin_low <= employee_count < e_min or e_max < employee_count <= margin_high:
+                return {"score": 0.5, "max": 1.0, "rationale": f"Borderline: {employee_count}"}
+            else:
+                return {"score": 0, "max": 1.0, "rationale": f"Outside range: {employee_count}"}
+
+        # Default Artefact ranges
         if 10 <= employee_count <= 200:
             return {"score": 1.0, "max": 1.0, "rationale": f"Ideal range: {employee_count}"}
         elif 5 <= employee_count < 10 or 200 < employee_count <= 500:
@@ -269,15 +310,20 @@ class ICPScorer:
 
         geo_lower = geography.lower().strip()
 
-        primary = ["quebec", "ontario", "bc", "british columbia", "alberta", "nova scotia", "canada", "montreal", "toronto", "vancouver"]
-        secondary = ["us", "usa", "united states", "new york", "boston", "california"]
+        primary = self._config.get("primary_geography", [
+            "quebec", "ontario", "bc", "british columbia", "alberta",
+            "nova scotia", "canada", "montreal", "toronto", "vancouver",
+        ])
+        secondary = self._config.get("secondary_geography", [
+            "us", "usa", "united states", "new york", "boston", "california",
+        ])
 
         for p in primary:
-            if p in geo_lower or geo_lower in p:
+            if p.lower() in geo_lower or geo_lower in p.lower():
                 return {"score": 0.5, "max": 0.5, "rationale": f"Primary market: {geography}"}
 
         for s in secondary:
-            if s in geo_lower or geo_lower in s:
+            if s.lower() in geo_lower or geo_lower in s.lower():
                 return {"score": 0.25, "max": 0.5, "rationale": f"Secondary market: {geography}"}
 
         return {"score": 0, "max": 0.5, "rationale": f"Outside market: {geography}"}
@@ -427,8 +473,11 @@ class ICPScorer:
     def _check_exclusions(self, data: dict) -> dict:
         industry = (data.get("industry") or "").lower().strip()
 
-        for excluded in EXCLUDED_INDUSTRIES:
-            if excluded in industry or industry in excluded:
+        exclusions = self._config.get("excluded_industries", EXCLUDED_INDUSTRIES)
+
+        for excluded in exclusions:
+            exc = excluded.lower() if isinstance(excluded, str) else excluded
+            if exc in industry or industry in exc:
                 return {
                     "excluded": True,
                     "reason": f"Industry '{data.get('industry')}' is in exclusion list",

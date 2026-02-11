@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "artefact-mcp"
-version = "0.1.2"
+version = "0.2.0"
 description = "Methodology-driven MCP server for revenue intelligence: RFM analysis, 14.5-point ICP scoring, pipeline health scoring, and HubSpot integration"
 readme = "README.md"
 license = {text = "BSL-1.1"}
