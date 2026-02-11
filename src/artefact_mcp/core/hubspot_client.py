@@ -244,20 +244,36 @@ class HubSpotClient:
         except httpx.HTTPStatusError as e:
             status = e.response.status_code
             if status == 401:
-                raise ValueError("HubSpot API key is invalid or expired.") from e
+                raise ValueError(
+                    "HubSpot API key is invalid or expired.\n\n"
+                    "To fix this:\n"
+                    "1. Go to HubSpot → Settings → Integrations → Private Apps\n"
+                    "2. Create a new private app (or regenerate the token on your existing one)\n"
+                    "3. Required scopes: crm.objects.deals.read, crm.objects.companies.read\n"
+                    "4. Copy the access token and set it as HUBSPOT_API_KEY"
+                ) from e
             elif status == 403:
                 raise ValueError(
-                    "HubSpot API key lacks required scopes. "
-                    "Ensure crm.objects.deals.read and crm.objects.companies.read are enabled."
+                    "HubSpot API key is missing required permissions.\n\n"
+                    "To fix this:\n"
+                    "1. Go to HubSpot → Settings → Integrations → Private Apps\n"
+                    "2. Edit your private app's scopes\n"
+                    "3. Enable: crm.objects.deals.read, crm.objects.companies.read\n"
+                    "4. If using pipeline features, also enable: crm.objects.deals.write\n"
+                    "5. Save and re-authorize the app"
                 ) from e
             elif status == 429:
                 raise ValueError(
-                    "HubSpot API rate limit exceeded. Try again in a few seconds."
+                    "HubSpot API rate limit exceeded. Wait a few seconds and try again.\n"
+                    "HubSpot allows 100 requests per 10 seconds for private apps."
                 ) from e
             else:
                 raise ValueError(f"HubSpot API error ({status}): {e.response.text[:200]}") from e
         except httpx.ConnectError as e:
-            raise ValueError("Cannot connect to HubSpot API. Check your network.") from e
+            raise ValueError(
+                "Cannot connect to HubSpot API. Check your internet connection.\n"
+                "If you're behind a proxy or firewall, ensure api.hubapi.com is accessible."
+            ) from e
 
     def _fetch_deals(self, stage_filter: Optional[str], limit: int) -> list[dict]:
         deals = []

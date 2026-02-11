@@ -13,16 +13,30 @@ from typing import Optional
 from artefact_mcp.core.hubspot_client import HubSpotClient
 
 
-SAMPLE_DEALS = [
-    {"id": "D001", "name": "Acme Corp - CRO Platform", "amount": 45000, "stage": "qualifiedtobuy", "pipeline": "default", "create_date": "2025-11-01", "close_date": "2026-03-15", "last_modified": "2026-02-05"},
-    {"id": "D002", "name": "Northern Tech - Discovery", "amount": 28000, "stage": "appointmentscheduled", "pipeline": "default", "create_date": "2026-01-10", "close_date": "2026-04-01", "last_modified": "2026-02-08"},
-    {"id": "D003", "name": "Maple Mfg - Full Engagement", "amount": 92000, "stage": "presentationscheduled", "pipeline": "default", "create_date": "2025-09-15", "close_date": "2026-02-28", "last_modified": "2026-01-20"},
-    {"id": "D004", "name": "Atlantic Services - Audit", "amount": 15000, "stage": "decisionmakerboughtin", "pipeline": "default", "create_date": "2025-12-01", "close_date": "2026-03-01", "last_modified": "2026-02-01"},
-    {"id": "D005", "name": "Prairie Logistics - Pipeline", "amount": 38000, "stage": "qualifiedtobuy", "pipeline": "default", "create_date": "2025-10-20", "close_date": "2026-03-30", "last_modified": "2026-01-15"},
-    {"id": "D006", "name": "Halifax Consulting - Stalled", "amount": 22000, "stage": "appointmentscheduled", "pipeline": "default", "create_date": "2025-07-01", "close_date": "2026-01-15", "last_modified": "2025-10-20"},
-    {"id": "D007", "name": "Vancouver FinTech - Expansion", "amount": 65000, "stage": "contractsent", "pipeline": "default", "create_date": "2025-08-15", "close_date": "2026-02-20", "last_modified": "2026-02-07"},
-    {"id": "D008", "name": "Calgary Construction - Intro", "amount": 18000, "stage": "appointmentscheduled", "pipeline": "default", "create_date": "2026-01-25", "close_date": "2026-05-01", "last_modified": "2026-02-03"},
-]
+def _sample_deal_date(days_ago: int) -> str:
+    """Generate a date string relative to today."""
+    from datetime import timedelta
+    return (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+
+
+def _future_date(days_ahead: int) -> str:
+    """Generate a future date string relative to today."""
+    from datetime import timedelta
+    return (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+
+
+def _get_sample_deals() -> list[dict]:
+    """Generate realistic sample deal data with relative dates."""
+    return [
+        {"id": "D001", "name": "Nextera Systems - Platform Implementation", "amount": 45000, "stage": "qualifiedtobuy", "pipeline": "default", "create_date": _sample_deal_date(100), "close_date": _future_date(35), "last_modified": _sample_deal_date(5)},
+        {"id": "D002", "name": "Covalent Labs - Discovery", "amount": 28000, "stage": "appointmentscheduled", "pipeline": "default", "create_date": _sample_deal_date(30), "close_date": _future_date(60), "last_modified": _sample_deal_date(2)},
+        {"id": "D003", "name": "Precision Components - Full Engagement", "amount": 92000, "stage": "presentationscheduled", "pipeline": "default", "create_date": _sample_deal_date(145), "close_date": _future_date(18), "last_modified": _sample_deal_date(20)},
+        {"id": "D004", "name": "Bridgeport Advisory - Audit", "amount": 15000, "stage": "decisionmakerboughtin", "pipeline": "default", "create_date": _sample_deal_date(70), "close_date": _future_date(20), "last_modified": _sample_deal_date(9)},
+        {"id": "D005", "name": "Clearpath Distribution - Pipeline Optimization", "amount": 38000, "stage": "qualifiedtobuy", "pipeline": "default", "create_date": _sample_deal_date(110), "close_date": _future_date(50), "last_modified": _sample_deal_date(26)},
+        {"id": "D006", "name": "Harborstone Consulting - Stalled", "amount": 22000, "stage": "appointmentscheduled", "pipeline": "default", "create_date": _sample_deal_date(220), "close_date": _sample_deal_date(25), "last_modified": _sample_deal_date(110)},
+        {"id": "D007", "name": "Vaulted Financial - Expansion", "amount": 65000, "stage": "contractsent", "pipeline": "default", "create_date": _sample_deal_date(175), "close_date": _future_date(10), "last_modified": _sample_deal_date(3)},
+        {"id": "D008", "name": "Ironworks Building - Intro", "amount": 18000, "stage": "appointmentscheduled", "pipeline": "default", "create_date": _sample_deal_date(15), "close_date": _future_date(80), "last_modified": _sample_deal_date(7)},
+    ]
 
 # Default pipeline stage order (HubSpot default pipeline)
 DEFAULT_STAGE_ORDER = [
@@ -278,7 +292,7 @@ def score_pipeline(
     now = datetime.now()
 
     if source == "sample":
-        deals = SAMPLE_DEALS
+        deals = _get_sample_deals()
     elif source == "hubspot":
         if not hubspot_client:
             raise ValueError(

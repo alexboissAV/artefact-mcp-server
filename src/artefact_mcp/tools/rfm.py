@@ -18,20 +18,28 @@ from artefact_mcp.core.segmenter import Segmenter, ICPAnalyzer
 from artefact_mcp.core.hubspot_client import HubSpotClient
 
 
-SAMPLE_CLIENTS = [
-    {"client_id": "S001", "client_name": "Acme SaaS Inc.", "total_revenue": 185000, "transaction_count": 8, "last_purchase_date": "2026-01-15", "industry": "SaaS", "employee_count": "51-200", "company_revenue": "$5M-$20M", "state_region": "Ontario"},
-    {"client_id": "S002", "client_name": "Maple Manufacturing", "total_revenue": 340000, "transaction_count": 12, "last_purchase_date": "2026-02-01", "industry": "Manufacturing", "employee_count": "201-500", "company_revenue": "$20M-$70M", "state_region": "Quebec"},
-    {"client_id": "S003", "client_name": "Northern Tech Co.", "total_revenue": 92000, "transaction_count": 4, "last_purchase_date": "2025-11-20", "industry": "Technology", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "BC"},
-    {"client_id": "S004", "client_name": "Atlantic Services", "total_revenue": 67000, "transaction_count": 3, "last_purchase_date": "2025-08-10", "industry": "Professional Services", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "Nova Scotia"},
-    {"client_id": "S005", "client_name": "Prairie Logistics", "total_revenue": 210000, "transaction_count": 6, "last_purchase_date": "2026-01-28", "industry": "Logistics", "employee_count": "51-200", "company_revenue": "$5M-$20M", "state_region": "Alberta"},
-    {"client_id": "S006", "client_name": "Quebec Digital Agency", "total_revenue": 28000, "transaction_count": 1, "last_purchase_date": "2025-03-15", "industry": "Agency", "employee_count": "1-10", "company_revenue": "<$1M", "state_region": "Quebec"},
-    {"client_id": "S007", "client_name": "Ontario Health Tech", "total_revenue": 155000, "transaction_count": 5, "last_purchase_date": "2025-12-01", "industry": "Healthcare", "employee_count": "51-200", "company_revenue": "$5M-$20M", "state_region": "Ontario"},
-    {"client_id": "S008", "client_name": "Vancouver FinTech", "total_revenue": 420000, "transaction_count": 15, "last_purchase_date": "2026-02-05", "industry": "FinTech", "employee_count": "51-200", "company_revenue": "$20M-$70M", "state_region": "BC"},
-    {"client_id": "S009", "client_name": "Calgary Construction", "total_revenue": 45000, "transaction_count": 2, "last_purchase_date": "2024-06-30", "industry": "Construction", "employee_count": "201-500", "company_revenue": "$20M-$70M", "state_region": "Alberta"},
-    {"client_id": "S010", "client_name": "Montreal EdTech", "total_revenue": 73000, "transaction_count": 3, "last_purchase_date": "2025-10-15", "industry": "EdTech", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "Quebec"},
-    {"client_id": "S011", "client_name": "Toronto Media Group", "total_revenue": 18000, "transaction_count": 1, "last_purchase_date": "2024-01-20", "industry": "Media", "employee_count": "1-10", "company_revenue": "<$1M", "state_region": "Ontario"},
-    {"client_id": "S012", "client_name": "Halifax Consulting", "total_revenue": 125000, "transaction_count": 7, "last_purchase_date": "2025-09-10", "industry": "Professional Services", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "Nova Scotia"},
-]
+def _sample_date(days_ago: int) -> str:
+    """Generate a date string relative to today."""
+    from datetime import timedelta
+    return (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+
+
+def _get_sample_clients() -> list[dict]:
+    """Generate realistic sample client data with relative dates."""
+    return [
+        {"client_id": "S001", "client_name": "Nextera Systems", "total_revenue": 185000, "transaction_count": 8, "last_purchase_date": _sample_date(25), "industry": "SaaS", "employee_count": "51-200", "company_revenue": "$5M-$20M", "state_region": "Ontario"},
+        {"client_id": "S002", "client_name": "Precision Components Group", "total_revenue": 340000, "transaction_count": 12, "last_purchase_date": _sample_date(8), "industry": "Manufacturing", "employee_count": "201-500", "company_revenue": "$20M-$70M", "state_region": "Quebec"},
+        {"client_id": "S003", "client_name": "Covalent Labs", "total_revenue": 92000, "transaction_count": 4, "last_purchase_date": _sample_date(80), "industry": "Technology", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "BC"},
+        {"client_id": "S004", "client_name": "Bridgeport Advisory", "total_revenue": 67000, "transaction_count": 3, "last_purchase_date": _sample_date(180), "industry": "Professional Services", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "Nova Scotia"},
+        {"client_id": "S005", "client_name": "Clearpath Distribution", "total_revenue": 210000, "transaction_count": 6, "last_purchase_date": _sample_date(12), "industry": "Logistics", "employee_count": "51-200", "company_revenue": "$5M-$20M", "state_region": "Alberta"},
+        {"client_id": "S006", "client_name": "Spark & Co Creative", "total_revenue": 28000, "transaction_count": 1, "last_purchase_date": _sample_date(330), "industry": "Agency", "employee_count": "1-10", "company_revenue": "<$1M", "state_region": "Quebec"},
+        {"client_id": "S007", "client_name": "MedBridge Health", "total_revenue": 155000, "transaction_count": 5, "last_purchase_date": _sample_date(70), "industry": "Healthcare", "employee_count": "51-200", "company_revenue": "$5M-$20M", "state_region": "Ontario"},
+        {"client_id": "S008", "client_name": "Vaulted Financial Technologies", "total_revenue": 420000, "transaction_count": 15, "last_purchase_date": _sample_date(4), "industry": "FinTech", "employee_count": "51-200", "company_revenue": "$20M-$70M", "state_region": "BC"},
+        {"client_id": "S009", "client_name": "Ironworks Building Corp", "total_revenue": 45000, "transaction_count": 2, "last_purchase_date": _sample_date(590), "industry": "Construction", "employee_count": "201-500", "company_revenue": "$20M-$70M", "state_region": "Alberta"},
+        {"client_id": "S010", "client_name": "Learnwell Platform", "total_revenue": 73000, "transaction_count": 3, "last_purchase_date": _sample_date(115), "industry": "EdTech", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "Quebec"},
+        {"client_id": "S011", "client_name": "Signal Nine Media", "total_revenue": 18000, "transaction_count": 1, "last_purchase_date": _sample_date(750), "industry": "Media", "employee_count": "1-10", "company_revenue": "<$1M", "state_region": "Ontario"},
+        {"client_id": "S012", "client_name": "Harborstone Consulting", "total_revenue": 125000, "transaction_count": 7, "last_purchase_date": _sample_date(150), "industry": "Professional Services", "employee_count": "11-50", "company_revenue": "$1M-$5M", "state_region": "Nova Scotia"},
+    ]
 
 
 def _get_scorer(industry_preset: str) -> RFMScorer:
@@ -97,7 +105,7 @@ def run_rfm_analysis(
         Full analysis results dict.
     """
     if source == "sample":
-        clients = SAMPLE_CLIENTS
+        clients = _get_sample_clients()
     elif source == "hubspot":
         if not hubspot_client:
             raise ValueError(

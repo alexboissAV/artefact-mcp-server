@@ -72,7 +72,7 @@ def _get_hubspot_client() -> Optional[HubSpotClient]:
     }
 )
 def run_rfm(
-    source: str = "hubspot",
+    source: str = "auto",
     industry_preset: str = "default",
 ) -> str:
     """Run RFM (Recency, Frequency, Monetary) analysis on client data.
@@ -81,12 +81,17 @@ def run_rfm(
     and extracts ICP patterns from top performers.
 
     Args:
-        source: Data source — "hubspot" for live HubSpot data, "sample" for built-in demo data.
+        source: Data source — "auto" (uses HubSpot if API key is set, otherwise sample data),
+            "hubspot" for live HubSpot data, "sample" for built-in demo data.
         industry_preset: Scoring preset — "b2b_service", "saas", "manufacturing", or "default".
 
     Returns:
         JSON with scored clients, segment distribution, ICP patterns, and tier recommendations.
     """
+    # Auto-detect source: use HubSpot if key is available, otherwise sample
+    if source == "auto":
+        source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
+
     try:
         require_license(source, _license)
     except ValueError as e:
@@ -99,6 +104,12 @@ def run_rfm(
             industry_preset=industry_preset,
             hubspot_client=client,
         )
+        # Add source hint when using sample data
+        if source == "sample":
+            result["_note"] = (
+                "Results based on built-in sample data. "
+                "Connect your HubSpot (set HUBSPOT_API_KEY) for live analysis."
+            )
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -195,7 +206,7 @@ def qualify(
 )
 def score_pipeline_health(
     pipeline_id: Optional[str] = None,
-    source: str = "hubspot",
+    source: str = "auto",
 ) -> str:
     """Analyze pipeline health with velocity metrics, conversion rates, and at-risk detection.
 
@@ -204,11 +215,16 @@ def score_pipeline_health(
 
     Args:
         pipeline_id: Optional HubSpot pipeline ID to filter. Default: all pipelines.
-        source: "hubspot" for live data, "sample" for built-in demo data.
+        source: "auto" (uses HubSpot if API key is set, otherwise sample data),
+            "hubspot" for live data, "sample" for built-in demo data.
 
     Returns:
         JSON with health score, velocity metrics, conversion rates, at-risk deals, and stage distribution.
     """
+    # Auto-detect source: use HubSpot if key is available, otherwise sample
+    if source == "auto":
+        source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
+
     try:
         require_license(source, _license)
     except ValueError as e:
@@ -221,6 +237,11 @@ def score_pipeline_health(
             source=source,
             hubspot_client=client,
         )
+        if source == "sample":
+            result["_note"] = (
+                "Results based on built-in sample data. "
+                "Connect your HubSpot (set HUBSPOT_API_KEY) for live analysis."
+            )
         return json.dumps(result, indent=2, default=str)
     except Exception as e:
         return json.dumps({"error": str(e)})

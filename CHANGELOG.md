@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-02-10
+
+### Fixed
+
+- **Smart source defaults** — `run_rfm` and `score_pipeline_health` now default to `source="auto"`, which uses HubSpot if `HUBSPOT_API_KEY` is set, otherwise falls back to sample data. Free users no longer hit a license error on first use.
+- **Realistic sample data** — Replaced toy company names ("Acme SaaS Inc.") with believable anonymized names ("Nextera Systems", "Precision Components Group"). Sample dates are now relative (always fresh) instead of hardcoded timestamps that go stale.
+- **Actionable HubSpot error messages** — 401/403/429 errors now include step-by-step fix instructions (which scopes to enable, where to find Private Apps in HubSpot settings).
+- **Sample data hint** — When results come from sample data, output includes a `_note` explaining how to connect live HubSpot data.
+
 ## [0.2.0] - 2026-02-10
 
 ### Added
