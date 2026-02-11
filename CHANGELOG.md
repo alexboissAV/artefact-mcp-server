@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] - 2026-02-10
+
+### Added
+
+- **Tool safety annotations** — All 3 tools now declare `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` per MCP spec. Required for Claude Desktop Extensions approval.
+- **COMPARISON.md** — Detailed comparison vs HubSpot Official MCP, CData, Zapier, and generic wrappers.
+- **ARCHITECTURE.md** — System diagram, data flow documentation, scoring engine reference.
+- **CHANGELOG.md** — Release history.
+- **GitHub Discussions** — Community engagement with seed topics.
+
 ## [0.1.0] - 2026-02-10
 
 ### Added

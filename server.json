@@ -2,12 +2,12 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.alexboissav/artefact-revenue-intelligence",
   "description": "Methodology-driven revenue intelligence MCP server with RFM analysis (11-segment classification), 14.5-point ICP scoring, and pipeline health scoring (0-100). Embeds the Artefact Formula — not a generic HubSpot CRUD wrapper. Built for B2B revenue teams.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packages": [
     {
       "registry_type": "pypi",
       "identifier": "artefact-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "transport": ["stdio"]
     }
   ],
