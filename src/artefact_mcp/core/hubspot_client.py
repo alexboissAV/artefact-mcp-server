@@ -153,14 +153,18 @@ class HubSpotClient:
             if pipeline_id and pipeline.get("id") != pipeline_id:
                 continue
             for stage in pipeline.get("stages", []):
+                stage_id_val = stage.get("id", "")
                 # HubSpot marks closed stages with metadata
                 metadata = stage.get("metadata", {})
                 if metadata.get("isClosed") == "true":
-                    closed_ids.add(stage.get("id", ""))
-                # Fallback: also catch common closed stage IDs
-                stage_id = stage.get("id", "").lower()
-                if stage_id in ("closedwon", "closedlost"):
-                    closed_ids.add(stage.get("id", ""))
+                    closed_ids.add(stage_id_val)
+                # Fallback: catch common closed stage IDs
+                if stage_id_val.lower() in ("closedwon", "closedlost"):
+                    closed_ids.add(stage_id_val)
+                # Fallback: catch stages with "closed won"/"closed lost" in label
+                label = stage.get("label", "").lower()
+                if "closed won" in label or "closed lost" in label:
+                    closed_ids.add(stage_id_val)
 
         return closed_ids
 
