@@ -1,8 +1,23 @@
 """
 Artefact Revenue Intelligence MCP Server
 
-FastMCP server that exposes 3 revenue intelligence tools and 4 methodology resources.
-Free tier works with sample data. Pro/Enterprise tiers require ARTEFACT_LICENSE_KEY.
+The AI-native interface to your Revenue Operating System.
+Version-controlled GTM intelligence — signals, commits, and closed-loop
+measurement — accessible to any AI agent.
+
+Tools:
+  - run_rfm: RFM analysis with ICP pattern signals
+  - qualify: 14.5-point ICP scoring with constraint context
+  - score_pipeline_health: Pipeline health with signal detection and exit criteria
+  - detect_signals: Scan for all 6 signal types
+  - identify_constraint: Find the dominant scaling constraint
+  - analyze_engine: Value Engine health analysis (Growth/Fulfillment/Innovation)
+  - propose_gtm_change: Draft structured GTM commits
+
+Resources:
+  - methodology://scoring-model, tier-definitions, rfm-segments, spiced-framework
+  - methodology://value-engines, exit-criteria, constraints
+  - methodology://signal-taxonomy, revenue-formula, gtm-commit-anatomy
 """
 
 import json
@@ -18,6 +33,10 @@ from artefact_mcp.core.license import validate_license, require_license, License
 from artefact_mcp.tools.rfm import run_rfm_analysis
 from artefact_mcp.tools.icp import qualify_prospect
 from artefact_mcp.tools.pipeline import score_pipeline
+from artefact_mcp.tools.signals import detect_signals as _detect_signals
+from artefact_mcp.tools.constraints import identify_dominant_constraint as _identify_constraint
+from artefact_mcp.tools.engines import analyze_engine as _analyze_engine
+from artefact_mcp.tools.gtm_commits import propose_gtm_change as _propose_gtm_change
 from artefact_mcp.resources.methodology import get_resource, list_resources
 
 # --- License validation at startup ---
@@ -40,10 +59,12 @@ else:
 mcp = FastMCP(
     "Artefact Revenue Intelligence",
     instructions=(
-        "Revenue intelligence tools powered by the Artefact Formula methodology. "
-        "Includes RFM analysis, ICP scoring (14.5-point model), and pipeline health scoring. "
-        "The qualify tool accepts an optional scoring_config parameter to customize "
-        "scoring for different industries, revenue ranges, and geographies. "
+        "The AI-native interface to your Revenue Operating System. "
+        "Version-controlled GTM intelligence with signal detection, constraint analysis, "
+        "value engine health scoring, and structured commit proposals. "
+        "Tools: RFM analysis, ICP scoring (14.5-point model), pipeline health, "
+        "signal detection (6 types), constraint identification (4 scaling constraints), "
+        "value engine analysis (Growth/Fulfillment/Innovation), and GTM commit drafting. "
         + (
             "Connect to HubSpot for live data or use built-in sample data."
             if _license.tier != "free"
@@ -81,7 +102,7 @@ def run_rfm(
     """Run RFM (Recency, Frequency, Monetary) analysis on client data.
 
     Scores clients based on purchase behavior, segments them into 11 categories,
-    and extracts ICP patterns from top performers.
+    extracts ICP patterns from top performers, and detects win/loss pattern signals.
 
     Args:
         source: Data source — "auto" (uses HubSpot if API key is set, otherwise sample data),
@@ -89,9 +110,8 @@ def run_rfm(
         industry_preset: Scoring preset — "b2b_service", "saas", "manufacturing", or "default".
 
     Returns:
-        JSON with scored clients, segment distribution, ICP patterns, and tier recommendations.
+        JSON with scored clients, segment distribution, ICP patterns, signals, and tier recommendations.
     """
-    # Auto-detect source: use HubSpot if key is available, otherwise sample
     if source == "auto":
         source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
 
@@ -107,7 +127,6 @@ def run_rfm(
             industry_preset=industry_preset,
             hubspot_client=client,
         )
-        # Add source hint when using sample data
         if source == "sample":
             result["_note"] = (
                 "Results based on built-in sample data. "
@@ -135,10 +154,11 @@ def qualify(
     company_data: Optional[str] = None,
     scoring_config: Optional[str] = None,
 ) -> str:
-    """Score a prospect against the Artefact 14.5-point ICP model.
+    """Score a prospect against the Artefact 14.5-point ICP model with constraint context.
 
     Evaluates Firmographic Fit (5 pts), Behavioral Fit (5 pts), and Strategic Fit (4.5 pts).
-    Returns tier classification (1-4), score breakdown, and recommended engagement strategy.
+    Returns tier classification, score breakdown, recommended engagement strategy,
+    and how this prospect relates to your scaling constraints.
 
     Provide EITHER company_id (HubSpot ID, requires HUBSPOT_API_KEY) OR company_data (JSON string).
 
@@ -152,16 +172,10 @@ def qualify(
             budget_authority ("dedicated"|"shared"|"possible"|"none"),
             strategic_alignment ("strong"|"partial"|"misaligned").
         scoring_config: Optional JSON string to override default scoring parameters.
-            Customize the model for your business. Example keys:
-            primary_industries (list), adjacent_industries (list),
-            excluded_industries (list), revenue_range ([min, max]),
-            employee_range ([min, max]), primary_geography (list),
-            secondary_geography (list).
 
     Returns:
-        JSON with total score, tier, breakdown, exclusion check, and recommended action.
+        JSON with total score, tier, breakdown, constraint context, and recommended action.
     """
-    # company_id requires HubSpot = requires license
     if company_id:
         try:
             require_license("hubspot", _license)
@@ -210,21 +224,25 @@ def qualify(
 def score_pipeline_health(
     pipeline_id: Optional[str] = None,
     source: str = "auto",
+    exit_criteria: Optional[str] = None,
 ) -> str:
-    """Analyze pipeline health with velocity metrics, conversion rates, and at-risk detection.
+    """Analyze pipeline health with velocity metrics, signal detection, and exit criteria testing.
 
     Calculates overall health score (0-100), identifies bottleneck stages,
-    measures stage-to-stage conversion rates, and flags stalled or overdue deals.
+    measures stage-to-stage conversion rates, flags stalled deals,
+    detects pipeline signals, and optionally tests deals against exit criteria.
 
     Args:
         pipeline_id: Optional HubSpot pipeline ID to filter. Default: all pipelines.
         source: "auto" (uses HubSpot if API key is set, otherwise sample data),
             "hubspot" for live data, "sample" for built-in demo data.
+        exit_criteria: Optional JSON string with exit criteria to test against.
+            List of objects: [{stage, test_name, required_field, is_blocking}].
 
     Returns:
-        JSON with health score, velocity metrics, conversion rates, at-risk deals, and stage distribution.
+        JSON with health score, velocity, conversion rates, at-risk deals, signals,
+        and optional exit criteria test results.
     """
-    # Auto-detect source: use HubSpot if key is available, otherwise sample
     if source == "auto":
         source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
 
@@ -233,12 +251,20 @@ def score_pipeline_health(
     except ValueError as e:
         return json.dumps({"error": str(e)})
 
+    parsed_criteria = None
+    if exit_criteria:
+        try:
+            parsed_criteria = json.loads(exit_criteria) if isinstance(exit_criteria, str) else exit_criteria
+        except (json.JSONDecodeError, TypeError) as e:
+            return json.dumps({"error": f"Invalid exit_criteria JSON: {e}"})
+
     client = _get_hubspot_client() if source == "hubspot" else None
     try:
         result = score_pipeline(
             pipeline_id=pipeline_id,
             source=source,
             hubspot_client=client,
+            exit_criteria=parsed_criteria,
         )
         if source == "sample":
             result["_note"] = (
@@ -251,6 +277,241 @@ def score_pipeline_health(
     finally:
         if client:
             client.close()
+
+
+@mcp.tool(
+    annotations={
+        "title": "Signal Detection",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
+def detect_signals(
+    source: str = "auto",
+    pipeline_id: Optional[str] = None,
+) -> str:
+    """Scan pipeline data for all 6 signal types and return structured findings.
+
+    Detects: win_loss_pattern, conversion_drop_off, velocity_anomaly,
+    attribution_shift, data_quality, and pipeline concentration signals.
+
+    Each signal includes signal_type, signal_strength (0-1), evidence,
+    and recommended_action — enabling evidence-backed GTM decisions.
+
+    Args:
+        source: "auto" (uses HubSpot if API key is set, otherwise sample data),
+            "hubspot" for live data, "sample" for built-in demo data.
+        pipeline_id: Optional HubSpot pipeline ID to filter.
+
+    Returns:
+        JSON with detected signals, summary, critical signals, and signal taxonomy.
+    """
+    if source == "auto":
+        source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
+
+    try:
+        require_license(source, _license)
+    except ValueError as e:
+        return json.dumps({"error": str(e)})
+
+    client = _get_hubspot_client() if source == "hubspot" else None
+    try:
+        result = _detect_signals(
+            source=source,
+            hubspot_client=client,
+            pipeline_id=pipeline_id,
+        )
+        if source == "sample":
+            result["_note"] = (
+                "Signals detected from built-in sample data. "
+                "Connect your HubSpot (set HUBSPOT_API_KEY) for live signal detection."
+            )
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+    finally:
+        if client:
+            client.close()
+
+
+@mcp.tool(
+    annotations={
+        "title": "Dominant Constraint Identification",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
+def identify_constraint(
+    source: str = "auto",
+    pipeline_id: Optional[str] = None,
+    quota: Optional[float] = None,
+) -> str:
+    """Identify the dominant scaling constraint bottlenecking revenue.
+
+    Analyzes pipeline coverage, conversion rates, velocity, and deal characteristics
+    to determine which of 4 constraints is dominant: Lead Generation, Conversion,
+    Delivery, or Profitability.
+
+    Returns the Revenue Formula breakdown (Traffic × CR1 × CR2 × ... × ACV × 1/Churn)
+    with gap-to-benchmark for each lever and the weakest link.
+
+    Args:
+        source: "auto" (uses HubSpot if API key is set, otherwise sample data),
+            "hubspot" for live data, "sample" for built-in demo data.
+        pipeline_id: Optional HubSpot pipeline ID to filter.
+        quota: Optional quarterly revenue quota for pipeline coverage calculation.
+
+    Returns:
+        JSON with dominant constraint, severity scores, revenue formula, and recommended focus.
+    """
+    if source == "auto":
+        source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
+
+    try:
+        require_license(source, _license)
+    except ValueError as e:
+        return json.dumps({"error": str(e)})
+
+    client = _get_hubspot_client() if source == "hubspot" else None
+    try:
+        result = _identify_constraint(
+            source=source,
+            hubspot_client=client,
+            pipeline_id=pipeline_id,
+            quota=quota,
+        )
+        if source == "sample":
+            result["_note"] = (
+                "Constraint analysis based on built-in sample data. "
+                "Connect your HubSpot (set HUBSPOT_API_KEY) for live analysis."
+            )
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+    finally:
+        if client:
+            client.close()
+
+
+@mcp.tool(
+    annotations={
+        "title": "Value Engine Analysis",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    }
+)
+def analyze_engine(
+    engine_type: str,
+    source: str = "auto",
+    pipeline_id: Optional[str] = None,
+) -> str:
+    """Analyze a Value Engine: Growth, Fulfillment, or Innovation.
+
+    Each engine has its own stages, metrics, and health scoring:
+    - **Growth:** Create Demand → Capture Demand → Convert. Pipeline-based metrics.
+    - **Fulfillment:** Onboard → Deliver → Activate → Review → Renew → Expand.
+    - **Innovation:** Gather → Prioritize → Build/Test → Launch.
+
+    Args:
+        engine_type: Which engine — "growth", "fulfillment", or "innovation".
+        source: "auto" (uses HubSpot if API key is set, otherwise sample data),
+            "hubspot" for live data, "sample" for built-in demo data.
+        pipeline_id: Optional HubSpot pipeline ID to filter.
+
+    Returns:
+        JSON with engine definition, health score, metrics, signals, and recommendations.
+    """
+    if source == "auto":
+        source = "hubspot" if os.getenv("HUBSPOT_API_KEY") else "sample"
+
+    try:
+        require_license(source, _license)
+    except ValueError as e:
+        return json.dumps({"error": str(e)})
+
+    client = _get_hubspot_client() if source == "hubspot" else None
+    try:
+        result = _analyze_engine(
+            engine_type=engine_type,
+            source=source,
+            hubspot_client=client,
+            pipeline_id=pipeline_id,
+        )
+        if source == "sample":
+            result["_note"] = (
+                "Engine analysis based on built-in sample data. "
+                "Connect your HubSpot (set HUBSPOT_API_KEY) for live analysis."
+            )
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+    finally:
+        if client:
+            client.close()
+
+
+@mcp.tool(
+    annotations={
+        "title": "GTM Change Proposal",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+def propose_gtm_change(
+    entity_type: str,
+    change_description: str,
+    current_state: Optional[str] = None,
+    proposed_state: Optional[str] = None,
+    signal_type: Optional[str] = None,
+    signal_data: Optional[str] = None,
+) -> str:
+    """Draft a structured GTM commit proposal following the GTM OS anatomy.
+
+    Creates a version-controlled change proposal with: Intent, Diff, Impact Surface,
+    Risk Level, Evidence, and Measurement Plan. Does NOT apply the change —
+    outputs a proposal for human review.
+
+    Args:
+        entity_type: What's being changed — "icp", "persona", "positioning",
+            "pipeline_stage", "exit_criteria", "gtm_motion", "scoring_model", "playbook".
+        change_description: Human-readable description of the proposed change.
+        current_state: Optional description of current state (before).
+        proposed_state: Optional description of proposed state (after).
+        signal_type: Optional signal type that triggered this change
+            (win_loss_pattern, conversion_drop_off, velocity_anomaly,
+            spiced_frequency, attribution_shift, data_quality).
+        signal_data: Optional JSON string with structured evidence from signal detection.
+
+    Returns:
+        JSON with structured commit proposal and next steps.
+    """
+    parsed_signal_data = None
+    if signal_data:
+        try:
+            parsed_signal_data = json.loads(signal_data) if isinstance(signal_data, str) else signal_data
+        except (json.JSONDecodeError, TypeError) as e:
+            return json.dumps({"error": f"Invalid signal_data JSON: {e}"})
+
+    try:
+        result = _propose_gtm_change(
+            entity_type=entity_type,
+            change_description=change_description,
+            current_state=current_state,
+            proposed_state=proposed_state,
+            signal_type=signal_type,
+            signal_data=parsed_signal_data,
+        )
+        return json.dumps(result, indent=2, default=str)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
 
 
 # --- Resources ---
@@ -280,6 +541,42 @@ def spiced_framework() -> str:
     return get_resource("spiced-framework")
 
 
+@mcp.resource("methodology://value-engines")
+def value_engines() -> str:
+    """3 Value Engines: Growth, Fulfillment, Innovation — stages, metrics, and mapping."""
+    return get_resource("value-engines")
+
+
+@mcp.resource("methodology://exit-criteria")
+def exit_criteria() -> str:
+    """Pipeline stage exit criteria framework with standard test library."""
+    return get_resource("exit-criteria")
+
+
+@mcp.resource("methodology://constraints")
+def constraints() -> str:
+    """4 scaling constraints (Lead Gen, Conversion, Delivery, Profitability) with diagnostics."""
+    return get_resource("constraints")
+
+
+@mcp.resource("methodology://signal-taxonomy")
+def signal_taxonomy() -> str:
+    """6 signal types for evidence-backed GTM intelligence."""
+    return get_resource("signal-taxonomy")
+
+
+@mcp.resource("methodology://revenue-formula")
+def revenue_formula() -> str:
+    """WbD multiplicative pipeline model + NRR compounding formula."""
+    return get_resource("revenue-formula")
+
+
+@mcp.resource("methodology://gtm-commit-anatomy")
+def gtm_commit_anatomy() -> str:
+    """5-component structure for version-controlled GTM changes."""
+    return get_resource("gtm-commit-anatomy")
+
+
 @mcp.resource("server://version")
 def server_version() -> str:
     """Server version and status information."""
@@ -288,12 +585,26 @@ def server_version() -> str:
         "version": __version__,
         "tier": _license.tier,
         "hubspot_connected": bool(os.getenv("HUBSPOT_API_KEY")),
-        "tools": ["run_rfm", "qualify", "score_pipeline_health"],
+        "tools": [
+            "run_rfm",
+            "qualify",
+            "score_pipeline_health",
+            "detect_signals",
+            "identify_constraint",
+            "analyze_engine",
+            "propose_gtm_change",
+        ],
         "resources": [
             "methodology://scoring-model",
             "methodology://tier-definitions",
             "methodology://rfm-segments",
             "methodology://spiced-framework",
+            "methodology://value-engines",
+            "methodology://exit-criteria",
+            "methodology://constraints",
+            "methodology://signal-taxonomy",
+            "methodology://revenue-formula",
+            "methodology://gtm-commit-anatomy",
         ],
     }, indent=2)
 

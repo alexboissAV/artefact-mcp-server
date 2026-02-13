@@ -176,6 +176,9 @@ def run_rfm_analysis(
         1 for c in scored if c["segment"] in ("At Risk", "Can't Lose Them")
     )
 
+    # Signal intelligence from RFM data
+    signals = _extract_rfm_signals(scored, icp_patterns, segment_dist)
+
     return {
         "analysis_date": analysis_date.strftime("%Y-%m-%d"),
         "total_clients": len(scored),
@@ -192,4 +195,71 @@ def run_rfm_analysis(
             "champion_count": champion_count,
             "at_risk_count": at_risk_count,
         },
+        "signals": signals,
     }
+
+
+def _extract_rfm_signals(
+    scored: list[dict],
+    icp_patterns: dict,
+    segment_dist: dict,
+) -> list[dict]:
+    """Extract signal intelligence from RFM analysis results."""
+    signals = []
+    total = len(scored)
+    if total == 0:
+        return signals
+
+    # Win/loss pattern: Champion concentration by industry
+    industry_patterns = icp_patterns.get("industry", {})
+    primary_industries = industry_patterns.get("primary", [])
+    for pattern in primary_industries[:2]:
+        signals.append({
+            "signal_type": "win_loss_pattern",
+            "signal_name": f"Champions concentrated in {pattern['value']}",
+            "evidence": (
+                f"{pattern['value']} represents {pattern['pct_top']}% of top performers "
+                f"vs. {pattern['pct_all']}% of all clients ({pattern['lift']}x lift)"
+            ),
+            "recommended_action": (
+                f"Strong ICP signal — {pattern['value']} clients outperform at "
+                f"{pattern['lift']}x. Weight this industry higher in ICP scoring."
+            ),
+        })
+
+    # Win/loss pattern: At-risk segment concentration
+    at_risk_count = sum(
+        1 for c in scored if c["segment"] in ("At Risk", "Can't Lose Them")
+    )
+    at_risk_pct = at_risk_count / total * 100
+    if at_risk_pct > 20:
+        signals.append({
+            "signal_type": "win_loss_pattern",
+            "signal_name": "High at-risk client concentration",
+            "evidence": (
+                f"{at_risk_count}/{total} clients ({at_risk_pct:.0f}%) are At Risk or Can't Lose. "
+                "This suggests retention issues."
+            ),
+            "recommended_action": (
+                "Prioritize retention outreach. Investigate common traits of at-risk clients "
+                "to build early warning triggers."
+            ),
+        })
+
+    # Revenue concentration signal
+    champion_revenue = segment_dist.get("Champions", {}).get("pct_revenue", 0)
+    if champion_revenue > 60:
+        signals.append({
+            "signal_type": "win_loss_pattern",
+            "signal_name": "Revenue over-concentrated in Champions",
+            "evidence": (
+                f"Champions generate {champion_revenue}% of total revenue. "
+                "High dependency on a small segment."
+            ),
+            "recommended_action": (
+                "Revenue concentration risk — diversify by nurturing Potential Loyalists "
+                "and Loyal Customers into Champions."
+            ),
+        })
+
+    return signals

@@ -274,20 +274,154 @@ def _calculate_health_score(
     return score, label
 
 
+def _evaluate_exit_criteria(
+    deals: list[dict],
+    exit_criteria: list[dict],
+    stage_labels: dict[str, str],
+) -> dict:
+    """Evaluate deals against structured exit criteria tests.
+
+    Args:
+        deals: List of deal dicts.
+        exit_criteria: List of exit criterion dicts, each with:
+            stage (stage ID), test_name, required_field, pass_condition.
+        stage_labels: Stage ID to label mapping.
+
+    Returns:
+        Dict with per-deal test results and aggregate pass rates.
+    """
+    if not exit_criteria:
+        return {}
+
+    deal_results = []
+    stage_pass_rates: dict[str, dict] = {}
+
+    for deal in deals:
+        deal_stage = deal.get("stage", "")
+        stage_label = stage_labels.get(deal_stage, deal_stage)
+
+        # Find criteria for this deal's stage
+        stage_criteria = [
+            c for c in exit_criteria
+            if c.get("stage") == deal_stage or c.get("stage") == stage_label
+        ]
+
+        if not stage_criteria:
+            continue
+
+        tests = []
+        for criterion in stage_criteria:
+            field = criterion.get("required_field", "")
+            test_name = criterion.get("test_name", "")
+
+            # Evaluate pass/fail based on field presence
+            value = deal.get(field)
+            passed = value is not None and value != "" and value != 0
+
+            tests.append({
+                "test_name": test_name,
+                "status": "pass" if passed else "fail",
+                "required_field": field,
+                "current_value": value,
+                "is_blocking": criterion.get("is_blocking", True),
+            })
+
+        passing = sum(1 for t in tests if t["status"] == "pass")
+        total_tests = len(tests)
+        blocking_failures = [t for t in tests if t["status"] == "fail" and t["is_blocking"]]
+
+        deal_results.append({
+            "deal_id": deal.get("id"),
+            "deal_name": deal.get("name"),
+            "stage": stage_label,
+            "tests": tests,
+            "passing": passing,
+            "total": total_tests,
+            "pass_rate": round(passing / total_tests * 100, 1) if total_tests > 0 else 0,
+            "blocked": len(blocking_failures) > 0,
+            "blocking_failures": [t["test_name"] for t in blocking_failures],
+        })
+
+        # Aggregate by stage
+        if stage_label not in stage_pass_rates:
+            stage_pass_rates[stage_label] = {"total_tests": 0, "passed": 0, "deals": 0}
+        stage_pass_rates[stage_label]["total_tests"] += total_tests
+        stage_pass_rates[stage_label]["passed"] += passing
+        stage_pass_rates[stage_label]["deals"] += 1
+
+    # Calculate aggregate pass rates
+    for stage in stage_pass_rates:
+        total = stage_pass_rates[stage]["total_tests"]
+        passed = stage_pass_rates[stage]["passed"]
+        stage_pass_rates[stage]["pass_rate"] = round(passed / total * 100, 1) if total > 0 else 0
+
+    return {
+        "deal_results": deal_results,
+        "stage_pass_rates": stage_pass_rates,
+    }
+
+
+def _detect_pipeline_signals(
+    deals: list[dict],
+    velocity: dict,
+    at_risk: list[dict],
+    stage_labels: dict[str, str],
+) -> list[dict]:
+    """Detect key signals from pipeline data for signal-framed output."""
+    signals = []
+
+    # Velocity anomaly signal
+    bottleneck = velocity.get("bottleneck_stage")
+    avg_days = velocity.get("avg_days_per_stage", {})
+    if bottleneck and avg_days.get(bottleneck, 0) > 60:
+        signals.append({
+            "signal_type": "velocity_anomaly",
+            "signal_name": f"Bottleneck detected: {bottleneck}",
+            "evidence": f"Average {avg_days[bottleneck]:.0f} days in stage (2x+ benchmark)",
+            "recommended_action": f"Review exit criteria and process for {bottleneck}",
+        })
+
+    # Conversion drop-off signal
+    rates = velocity.get("conversion_rates", {})
+    for transition, rate in rates.items():
+        if rate < 25:
+            signals.append({
+                "signal_type": "conversion_drop_off",
+                "signal_name": f"Severe drop-off: {transition}",
+                "evidence": f"Only {rate}% conversion (benchmark: 50%)",
+                "recommended_action": "Investigate qualification criteria at this transition",
+            })
+
+    # Win/loss pattern signal
+    total = len(deals)
+    if total > 0 and len(at_risk) / total > 0.3:
+        signals.append({
+            "signal_type": "win_loss_pattern",
+            "signal_name": "High at-risk deal proportion",
+            "evidence": f"{len(at_risk)}/{total} deals ({len(at_risk)/total*100:.0f}%) flagged at-risk",
+            "recommended_action": "Review pipeline qualification — deals may be advancing prematurely",
+        })
+
+    return signals
+
+
 def score_pipeline(
     pipeline_id: Optional[str] = None,
     source: str = "hubspot",
     hubspot_client: Optional[HubSpotClient] = None,
+    exit_criteria: Optional[list[dict]] = None,
 ) -> dict:
-    """Score pipeline health with velocity metrics and at-risk detection.
+    """Score pipeline health with velocity metrics, at-risk detection, and signal intelligence.
 
     Args:
         pipeline_id: Optional pipeline ID filter.
         source: "hubspot" or "sample".
         hubspot_client: Pre-configured HubSpotClient (required for source="hubspot").
+        exit_criteria: Optional list of exit criterion dicts for structured testing.
+            Each criterion: {stage, test_name, required_field, pass_condition, is_blocking}.
 
     Returns:
-        Pipeline health analysis dict.
+        Pipeline health analysis with signal framing and optional exit criteria results.
     """
     now = datetime.now()
 
@@ -326,6 +460,7 @@ def score_pipeline(
             "conversion_rates": {},
             "at_risk_deals": [],
             "stage_distribution": {},
+            "signals": [],
         }
 
     _labels = stage_labels or STAGE_LABELS
@@ -349,7 +484,10 @@ def score_pipeline(
         stage_dist[stage]["count"] += 1
         stage_dist[stage]["value"] += deal.get("amount", 0)
 
-    return {
+    # Signal detection
+    pipeline_signals = _detect_pipeline_signals(deals, velocity, at_risk, _labels)
+
+    result = {
         "health_score": health_score,
         "health_label": health_label,
         "total_deals": len(deals),
@@ -362,4 +500,12 @@ def score_pipeline(
         "conversion_rates": velocity["conversion_rates"],
         "at_risk_deals": at_risk,
         "stage_distribution": stage_dist,
+        "signals": pipeline_signals,
     }
+
+    # Exit criteria evaluation (if provided)
+    if exit_criteria:
+        criteria_results = _evaluate_exit_criteria(deals, exit_criteria, _labels)
+        result["exit_criteria_results"] = criteria_results
+
+    return result

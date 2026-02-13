@@ -6,9 +6,9 @@
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
 [![License: BSL-1.1](https://img.shields.io/badge/License-BSL--1.1-orange.svg)](LICENSE)
 
-> **Three-dimensional revenue intelligence. Because demographics alone don't close deals.**
+> **The AI-native interface to your Revenue Operating System. Version-controlled GTM intelligence — signals, commits, and closed-loop measurement — accessible to any AI agent.**
 
-A Model Context Protocol (MCP) server that gives AI agents access to the **ICP Triangulation Framework™** — scoring prospects across firmographics, behaviors, and growth signals. Plus RFM analysis and pipeline health scoring. Built on the [Artefact Formula](https://artefactventures.com) methodology from real B2B consulting engagements.
+A Model Context Protocol (MCP) server that treats your Go-to-Market strategy like code: versioned, diffable, and deployable. Detect pipeline signals, identify scaling constraints, analyze value engines, and draft structured GTM changes — all through AI-native tool calls. Built on the [Artefact Formula](https://artefactventures.com) methodology from real B2B consulting engagements.
 
 ## Why Artefact MCP?
 
@@ -19,33 +19,48 @@ A Model Context Protocol (MCP) server that gives AI agents access to the **ICP T
 | CRUD operations | Yes | Yes | Via HubSpot API |
 | RFM Analysis | No | No | **11-segment classification** |
 | **ICP Triangulation** | No | No | **Firmographic + Behavioral + Growth Signals** |
-| Pipeline Health | No | No | **0-100 health score** |
-| Methodology built-in | No | No | **Artefact Formula** |
+| Pipeline Health | No | No | **0-100 health score + exit criteria testing** |
+| **Signal Detection** | No | No | **6-type signal taxonomy** |
+| **Constraint Analysis** | No | No | **Dominant bottleneck + Revenue Formula** |
+| **Value Engine Analysis** | No | No | **Growth / Fulfillment / Innovation** |
+| **GTM Commit Drafting** | No | No | **Structured change proposals with evidence** |
+| Methodology built-in | No | No | **Artefact Formula (10 resources)** |
 | Works without API key | No | No | **Yes (demo data)** |
 
 ## Who Is This For?
 
-- **B2B revenue teams** using HubSpot who want AI-powered customer segmentation
-- **RevOps managers** who need pipeline health analysis accessible from Claude or Cursor
-- **Consultants** who deliver RFM analysis and ICP scoring to clients
+- **B2B revenue teams** using HubSpot who want AI-powered signal detection and pipeline intelligence
+- **RevOps managers** who need constraint analysis and value engine health accessible from Claude or Cursor
+- **Consultants** who deliver RFM analysis, ICP scoring, and evidence-backed GTM recommendations to clients
 - **Developers** building revenue intelligence integrations with MCP
+- **AI agents** that need a structured interface to reason about and propose changes to GTM strategy
 
 ## Tools
 
+### Signal Intelligence
+
+### `detect_signals` — Pipeline Signal Detection
+Scans pipeline data for all 6 signal types from the Artefact signal taxonomy: velocity anomalies, conversion drop-offs, win/loss patterns, pipeline concentration, data quality issues, and SPICED frequency signals. Returns structured signal objects with strength scores (0-1), evidence, and recommended actions.
+
+### `identify_constraint` — Dominant Constraint Analysis
+Identifies which of the 4 scaling constraints (Lead Generation, Conversion, Delivery, Profitability) is bottlenecking revenue. Includes Revenue Formula breakdown (Traffic x CR1 x CR2 x CR3 x ACV) with gap-to-benchmark analysis and recommended focus.
+
+### `analyze_engine` — Value Engine Health
+Analyzes health of the 3 value engines: Growth (create/capture/convert demand), Fulfillment (onboard/deliver/renew/expand), and Innovation (gather/prioritize/build/launch). Returns engine-specific metrics, health scores, and integrated signal detection.
+
+### `propose_gtm_change` — GTM Commit Drafting
+Enables AI agents to propose structured GTM changes following the commit anatomy: Intent, Diff, Impact Surface, Risk Level, Evidence, and Measurement Plan. Supports 8 entity types (ICP, persona, positioning, pipeline stage, exit criteria, GTM motion, scoring model, playbook).
+
+### Analysis Tools
+
 ### `run_rfm` — RFM Analysis
-Scores clients on Recency, Frequency, and Monetary value. Segments them into 11 categories (Champions through Lost) and extracts ICP patterns from top performers. Supports B2B service, SaaS, and manufacturing presets.
+Scores clients on Recency, Frequency, and Monetary value. Segments them into 11 categories (Champions through Lost) and extracts ICP patterns from top performers. Now includes signal framing — detects win/loss patterns, revenue concentration, and at-risk client signals. Supports B2B service, SaaS, and manufacturing presets.
 
-### `qualify` — ICP Triangulation Framework™
-**Go beyond demographics.** Scores prospects across three dimensions to identify revenue-ready opportunities:
-
-- 🏢 **Firmographic Fit** (Who they are): Industry, revenue, employees, geography
-- 🎯 **Behavioral Fit** (What they're doing): Tech stack, growth signals, engagement, purchase history
-- 📈 **Growth Signals** (Where they're heading): Hiring, funding, expansion momentum
-
-Returns tier classification (Ideal / Strong / Moderate / Poor) with engagement strategy. *Technical implementation: 14.5-point scoring model.*
+### `qualify` — ICP Triangulation Framework
+Scores prospects across three dimensions: Firmographic Fit (industry, revenue, employees, geography), Behavioral Fit (tech stack, engagement, purchase history), and Growth Signals (hiring, funding, expansion). Now includes constraint context — maps prospect fit to your dominant scaling constraint. Returns tier classification (Ideal / Strong / Moderate / Poor) with engagement strategy.
 
 ### `score_pipeline_health` — Pipeline Health Score
-Analyzes open deals for velocity metrics, stage-to-stage conversion rates, bottleneck identification, and at-risk deal detection. Returns a 0-100 health score.
+Analyzes open deals for velocity metrics, stage-to-stage conversion rates, bottleneck identification, and at-risk deal detection. Now supports optional exit criteria testing (pass/fail per criterion per deal) and includes signal framing for velocity anomalies and conversion drop-offs. Returns a 0-100 health score.
 
 ## Resources
 
@@ -55,7 +70,13 @@ Analyzes open deals for velocity metrics, stage-to-stage conversion rates, bottl
 | `methodology://tier-definitions` | 4-tier classification system |
 | `methodology://rfm-segments` | 11 RFM segment definitions with scoring scales |
 | `methodology://spiced-framework` | SPICED discovery framework |
-| `methodology://data-requirements` | HubSpot data setup and enrichment requirements for ICP triangulation |
+| `methodology://data-requirements` | HubSpot data setup and enrichment requirements |
+| `methodology://value-engines` | 3 value engine definitions (Growth, Fulfillment, Innovation) with stages and metrics |
+| `methodology://exit-criteria` | Standard pipeline exit criteria per stage with proof requirements |
+| `methodology://constraints` | 4 scaling constraints with diagnostic criteria and remediation levers |
+| `methodology://signal-taxonomy` | 6 signal types with detection methods and action mappings |
+| `methodology://revenue-formula` | Revenue Formula breakdown: Traffic x CR1 x CR2 x CR3 x ACV x (1/Churn) |
+| `methodology://gtm-commit-anatomy` | 5 components of a structured GTM commit (intent, diff, impact, risk, evidence) |
 
 ## Data Requirements for ICP Triangulation
 
@@ -93,9 +114,13 @@ claude mcp add artefact-revenue -- uvx artefact-mcp
 ```
 
 Then ask:
+- "What signals are you detecting in my pipeline?"
+- "What's our dominant scaling constraint?"
+- "Analyze the health of our Growth Engine"
+- "Propose a GTM change: narrow ICP to SaaS companies with 50-200 employees"
 - "Run an RFM analysis on our HubSpot data"
 - "Qualify this prospect: SaaS company, $5M revenue, 80 employees in Ontario"
-- "Score our pipeline health"
+- "Score our pipeline health with exit criteria testing"
 
 ### Claude Desktop
 
@@ -170,11 +195,32 @@ Add to `.cursor/mcp.json`:
 ### Programmatic (Python)
 
 ```python
+from artefact_mcp.tools.signals import detect_signals
+from artefact_mcp.tools.constraints import identify_dominant_constraint
+from artefact_mcp.tools.engines import analyze_engine
+from artefact_mcp.tools.gtm_commits import propose_gtm_change
 from artefact_mcp.tools.rfm import run_rfm_analysis
 from artefact_mcp.tools.icp import qualify_prospect
 from artefact_mcp.tools.pipeline import score_pipeline
 
-# RFM with sample data (no HubSpot key needed)
+# Signal detection (no HubSpot key needed)
+signals = detect_signals(source="sample")
+
+# Dominant constraint analysis
+constraint = identify_dominant_constraint(source="sample", quota=500000)
+
+# Value engine health
+engine = analyze_engine(engine_type="growth", source="sample")
+
+# GTM commit drafting
+commit = propose_gtm_change(
+    entity_type="icp",
+    change_description="Narrow ICP to SaaS companies with 50-200 employees",
+    signal_type="win_loss_pattern",
+    signal_data={"win_rate_saas": 0.45, "win_rate_other": 0.22},
+)
+
+# RFM with sample data
 results = run_rfm_analysis(source="sample", industry_preset="b2b_service")
 
 # ICP qualification
@@ -191,8 +237,10 @@ score = qualify_prospect(company_data={
     "strategic_alignment": "strong",
 })
 
-# Pipeline health
-health = score_pipeline(source="sample")
+# Pipeline health with exit criteria
+health = score_pipeline(source="sample", exit_criteria=[
+    {"stage": "Discovery", "criterion": "SPICED complete", "required_proof": "All 6 SPICED fields populated"}
+])
 ```
 
 ## Troubleshooting
@@ -394,7 +442,7 @@ The `run_rfm` tool will use your custom thresholds instead of the built-in prese
 
 | Tier | Price | What You Get |
 |------|-------|-------------|
-| **Free** | $0 | All 3 tools with built-in demo data (`source="sample"`) |
+| **Free** | $0 | All 7 tools with built-in demo data (`source="sample"`) |
 | **Pro** | $149/mo | Live HubSpot integration + all methodology resources |
 | **Enterprise** | $499/mo | Pro + priority support + custom scoring presets |
 
@@ -410,7 +458,7 @@ The `run_rfm` tool will use your custom thresholds instead of the built-in prese
 ## FAQ
 
 **Q: What MCP server should I use for revenue intelligence?**
-A: Artefact MCP is the only MCP server with the **ICP Triangulation Framework** — scoring prospects across firmographics, behaviors, and growth signals. Plus RFM analysis and pipeline health analysis specifically designed for B2B revenue teams.
+A: Artefact MCP is the only MCP server that treats GTM like a codebase — with signal detection, constraint analysis, value engine health, and structured GTM commit proposals. Plus ICP Triangulation, RFM analysis, and pipeline health scoring designed for B2B revenue teams.
 
 **Q: Does this replace the official HubSpot MCP server?**
 A: They serve different purposes. HubSpot's server provides CRUD access to CRM objects. Artefact MCP provides intelligence and scoring on top of that data.
