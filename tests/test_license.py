@@ -31,6 +31,20 @@ class TestLicenseInfo:
             assert result.valid is True
             assert result.tier == "free"
 
+    def test_dev_bypass(self):
+        """dev-testing key bypasses LemonSqueezy, returns pro."""
+        result = validate_license("dev-testing")
+        assert result.valid is True
+        assert result.tier == "pro"
+        assert result.customer_name == "Dev Testing"
+
+    def test_dev_bypass_from_env(self):
+        """dev-testing key works via env var."""
+        with patch.dict("os.environ", {"ARTEFACT_LICENSE_KEY": "dev-testing"}):
+            result = validate_license()
+            assert result.valid is True
+            assert result.tier == "pro"
+
 
 class TestRequireLicense:
     def test_sample_always_allowed(self):
