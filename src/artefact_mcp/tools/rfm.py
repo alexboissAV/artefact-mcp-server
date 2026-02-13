@@ -68,6 +68,10 @@ def _score_client(
         except ValueError:
             last_purchase = None
 
+    # Strip timezone info for safe comparison (HubSpot returns tz-aware dates)
+    if last_purchase and hasattr(last_purchase, "tzinfo") and last_purchase.tzinfo is not None:
+        last_purchase = last_purchase.replace(tzinfo=None)
+
     days_since = (analysis_date - last_purchase).days if last_purchase else 999
 
     r = scorer.score_recency(days_since)
