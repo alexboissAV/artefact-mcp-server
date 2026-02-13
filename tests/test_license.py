@@ -32,18 +32,28 @@ class TestLicenseInfo:
             assert result.tier == "free"
 
     def test_dev_bypass(self):
-        """dev-testing key bypasses LemonSqueezy, returns pro."""
-        result = validate_license("dev-testing")
+        """Dev bypass key (hash-verified) returns pro."""
+        result = validate_license("artefact-internal-qa-2026")
         assert result.valid is True
         assert result.tier == "pro"
         assert result.customer_name == "Dev Testing"
 
     def test_dev_bypass_from_env(self):
-        """dev-testing key works via env var."""
-        with patch.dict("os.environ", {"ARTEFACT_LICENSE_KEY": "dev-testing"}):
+        """Dev bypass key works via env var."""
+        with patch.dict("os.environ", {"ARTEFACT_LICENSE_KEY": "artefact-internal-qa-2026"}):
             result = validate_license()
             assert result.valid is True
             assert result.tier == "pro"
+
+    def test_dev_bypass_wrong_key(self):
+        """Old plaintext bypass no longer works."""
+        # This would hit LemonSqueezy (mocked to fail), proving hash-only check
+        with patch("artefact_mcp.core.license._validate_remote") as mock_remote:
+            mock_remote.return_value = LicenseInfo(valid=False, tier="free", error="Invalid")
+            with patch("artefact_mcp.core.license._read_cache", return_value=None):
+                result = validate_license("dev-testing")
+                assert result.tier == "free"
+                mock_remote.assert_called_once()
 
 
 class TestRequireLicense:
