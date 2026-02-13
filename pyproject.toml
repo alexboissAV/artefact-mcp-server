@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "artefact-mcp"
-version = "0.3.0"
+version = "0.3.1"
 description = "The AI-native interface to your Revenue Operating System — signal detection, constraint analysis, value engine health, GTM commit drafting, plus RFM, ICP scoring, and pipeline health"
 readme = "README.md"
 license = {text = "BSL-1.1"}

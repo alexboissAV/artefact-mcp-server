@@ -76,39 +76,58 @@ class HubSpotClient:
     # --- Open Deals (for Pipeline) ---
 
     def fetch_open_deals(self, pipeline_id: Optional[str] = None) -> list[dict]:
-        """Fetch all open deals, optionally filtered by pipeline."""
+        """Fetch all open deals, optionally filtered by pipeline.
+
+        Uses HubSpot's Search API to exclude closed stages reliably.
+        First fetches pipeline definitions to identify closed stage IDs,
+        then filters them out server-side.
+        """
+        # Step 1: Get all closed stage IDs across pipelines
+        closed_stage_ids = self._get_closed_stage_ids(pipeline_id)
+
+        # Step 2: Search for deals, excluding closed stages
         deals = []
-        after = None
+        after = "0"
         pages = 0
 
         while pages < self.MAX_PAGES:
             pages += 1
-            url = f"{self.BASE_URL}/crm/v3/objects/deals"
-            params: dict = {
-                "limit": 100,
-                "properties": "dealname,amount,closedate,dealstage,pipeline,createdate,hs_lastmodifieddate",
-                "associations": "companies",
-            }
-            if after:
-                params["after"] = after
+            url = f"{self.BASE_URL}/crm/v3/objects/deals/search"
 
-            response = self._request("GET", url, params=params)
+            filters = []
+            if closed_stage_ids:
+                filters.append({
+                    "propertyName": "dealstage",
+                    "operator": "NOT_IN",
+                    "values": list(closed_stage_ids),
+                })
+            if pipeline_id:
+                filters.append({
+                    "propertyName": "pipeline",
+                    "operator": "EQ",
+                    "value": pipeline_id,
+                })
+
+            payload: dict = {
+                "filterGroups": [{"filters": filters}] if filters else [],
+                "properties": [
+                    "dealname", "amount", "closedate", "dealstage",
+                    "pipeline", "createdate", "hs_lastmodifieddate",
+                ],
+                "limit": 100,
+                "after": after,
+            }
+
+            response = self._request("POST", url, json=payload)
             data = response.json()
 
             for deal in data.get("results", []):
                 props = deal.get("properties", {})
-                stage = props.get("dealstage", "")
-
-                if stage.lower() in ("closedwon", "closedlost"):
-                    continue
-                if pipeline_id and props.get("pipeline") != pipeline_id:
-                    continue
-
                 deals.append({
                     "id": deal.get("id"),
                     "name": props.get("dealname"),
                     "amount": self._safe_float(props.get("amount")),
-                    "stage": stage,
+                    "stage": props.get("dealstage", ""),
                     "pipeline": props.get("pipeline"),
                     "create_date": self._parse_date(props.get("createdate")),
                     "close_date": self._parse_date(props.get("closedate")),
@@ -122,6 +141,28 @@ class HubSpotClient:
                 break
 
         return deals
+
+    def _get_closed_stage_ids(self, pipeline_id: Optional[str] = None) -> set[str]:
+        """Fetch pipeline definitions and return IDs of all closed stages."""
+        closed_ids: set[str] = set()
+        url = f"{self.BASE_URL}/crm/v3/pipelines/deals"
+        response = self._request("GET", url)
+        data = response.json()
+
+        for pipeline in data.get("results", []):
+            if pipeline_id and pipeline.get("id") != pipeline_id:
+                continue
+            for stage in pipeline.get("stages", []):
+                # HubSpot marks closed stages with metadata
+                metadata = stage.get("metadata", {})
+                if metadata.get("isClosed") == "true":
+                    closed_ids.add(stage.get("id", ""))
+                # Fallback: also catch common closed stage IDs
+                stage_id = stage.get("id", "").lower()
+                if stage_id in ("closedwon", "closedlost"):
+                    closed_ids.add(stage.get("id", ""))
+
+        return closed_ids
 
     # --- Pipeline Stages (auto-detect) ---
 
