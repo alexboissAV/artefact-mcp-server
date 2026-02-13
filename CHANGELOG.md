@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2026-02-13
+
+### Fixed
+
+- **Timezone-aware datetime comparison** — RFM analysis now correctly handles timezone-aware datetimes from HubSpot API. Fixes `TypeError: can't compare offset-naive and offset-aware datetimes` when using live HubSpot data.
+
+### Added
+
+- **CI/CD workflows** — Automated testing on push/PR and PyPI publishing on version tags via GitHub Actions.
+- **Smithery marketplace listing** — Fleshed out `smithery.yaml` with full metadata for Smithery marketplace discovery.
+
+## [0.3.2] - 2026-02-13
+
+### Fixed
+
+- **Closed stage detection for custom labels** — Pipeline health now correctly identifies closed stages when HubSpot uses custom stage labels (e.g., "Closed - Won" vs "closedwon"). Matches on both internal IDs and display labels.
+
+## [0.3.1] - 2026-02-13
+
+### Fixed
+
+- **Open deals filter** — Pipeline health scoring now uses HubSpot pipeline metadata (`isClosed` flag + label matching) to filter out closed deals instead of hardcoding stage names. Works correctly with any custom pipeline configuration.
+
+## [0.3.0] - 2026-02-13
+
+### Added
+
+- **Signal Detection** (`detect_signals`) — 6-type signal taxonomy: velocity anomalies, conversion drop-offs, win/loss patterns, pipeline concentration, data quality issues, and SPICED frequency signals. Returns structured signal objects with strength scores (0-1), evidence, and recommended actions.
+- **Constraint Analysis** (`identify_constraint`) — Identifies dominant scaling constraint (Lead Generation, Conversion, Delivery, Profitability) with Revenue Formula breakdown (Traffic × CR1 × CR2 × CR3 × ACV) and gap-to-benchmark analysis.
+- **Value Engine Analysis** (`analyze_engine`) — Health scoring for Growth, Fulfillment, and Innovation engines with stage-specific metrics and integrated signal detection.
+- **GTM Commit Drafting** (`propose_gtm_change`) — AI agents can propose structured GTM changes with intent, diff, impact surface, risk level, evidence, and measurement plans. Supports 8 entity types.
+- **6 new methodology resources** — `value-engines`, `exit-criteria`, `constraints`, `signal-taxonomy`, `revenue-formula`, `gtm-commit-anatomy`.
+- **Exit criteria testing** for `score_pipeline_health` — Pass/fail per criterion per deal.
+- **Signal framing** for `run_rfm` — Win/loss pattern signals, revenue concentration detection.
+- **Constraint context** for `qualify` — Maps prospect fit to dominant scaling constraint.
+- **108 tests passing** (44 new + 64 existing).
+
+### Changed
+
+- Server now exposes **7 tools** (up from 3) and **11 methodology resources** (up from 4).
+- README rewritten to reflect GTM Operating System positioning.
+
+## [0.2.3] - 2026-02-10
+
+### Added
+
+- **Python installation method** — Added `python3 -m artefact_mcp` as recommended installation method for Claude Desktop (more reliable than `uvx` for sandboxed apps).
+- **Comprehensive troubleshooting** — Added troubleshooting section for common issues (uvx PATH, HubSpot API key, import errors).
+
+### Security
+
+- **Dev bypass hardening** — License bypass for internal testing uses SHA-256 hash verification only (key not stored in source code).
+
 ## [0.2.2] - 2026-02-10
 
 ### Fixed

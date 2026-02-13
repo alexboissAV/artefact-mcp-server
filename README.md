@@ -279,7 +279,7 @@ health = score_pipeline(source="sample", exit_criteria=[
 
 3. **Verify manually:** Test that the MCP server starts correctly:
    ```bash
-   uvx artefact-mcp==0.2.3
+   uvx artefact-mcp==0.3.3
    # Should see: "Artefact Revenue Intelligence MCP Server running..."
    ```
 
@@ -484,6 +484,10 @@ pytest tests/
 - `httpx>=0.25.0` — HTTP client for HubSpot API
 
 No pandas, numpy, or heavy data libraries. Pure Python scoring logic.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=alexboissAV/artefact-mcp-server&type=Date)](https://star-history.com/#alexboissAV/artefact-mcp-server&Date)
 
 ## License
 
